@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pgim", "pgim\pgim.csproj", "{62083421-77A1-4271-9DC3-2E85E707D060}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PGTest", "PGTest\PGTest.csproj", "{96129CE2-7E51-4B07-AAD1-4727ACAD009C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PGDis", "PGDis\PGDis.csproj", "{DA873306-91F7-43E6-BD6B-80C9D3703B0E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{62083421-77A1-4271-9DC3-2E85E707D060}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62083421-77A1-4271-9DC3-2E85E707D060}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62083421-77A1-4271-9DC3-2E85E707D060}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62083421-77A1-4271-9DC3-2E85E707D060}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96129CE2-7E51-4B07-AAD1-4727ACAD009C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96129CE2-7E51-4B07-AAD1-4727ACAD009C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96129CE2-7E51-4B07-AAD1-4727ACAD009C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96129CE2-7E51-4B07-AAD1-4727ACAD009C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA873306-91F7-43E6-BD6B-80C9D3703B0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA873306-91F7-43E6-BD6B-80C9D3703B0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA873306-91F7-43E6-BD6B-80C9D3703B0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA873306-91F7-43E6-BD6B-80C9D3703B0E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
