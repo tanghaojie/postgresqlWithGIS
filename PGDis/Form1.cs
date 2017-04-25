@@ -444,7 +444,7 @@ namespace PGDis {
             sw.Stop();
             long time_arcgis = sw.ElapsedMilliseconds;
 
-            SetProgress("PG裁剪，正在执行...", 80);
+            SetProgress("PG裁剪，正在执行...", 80); 
             sw.Restart();
             //pg
             DataSet ds = Execute_PG(GetIntersectionCountAndSumLengthSql(wkt));
