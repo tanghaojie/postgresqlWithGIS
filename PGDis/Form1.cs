@@ -457,7 +457,7 @@ namespace PGDis {
                     totalLength_pg = double.Parse(dt.Rows[0][1].ToString());
                 }
             }
-            sw.Stop();
+            sw.Stop(); 
             long time_pg = sw.ElapsedMilliseconds;
 
             SetProgress("裁剪完成...", 100);
