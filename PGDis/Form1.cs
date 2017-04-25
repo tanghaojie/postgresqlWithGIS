@@ -448,7 +448,7 @@ namespace PGDis {
             sw.Restart();
             //pg
             DataSet ds = Execute_PG(GetIntersectionCountAndSumLengthSql(wkt));
-            int count_pg = 0;
+            int count_pg = 0; 
             double totalLength_pg = 0;
             if (ds.Tables.Count > 0) {
                 DataTable dt = ds.Tables[0];
