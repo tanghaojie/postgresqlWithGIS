@@ -9,6 +9,7 @@ using System;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace PGDis {
@@ -494,7 +495,7 @@ namespace PGDis {
         private void SetProgress(string txt, int value) {
             toolStripStatusLabel2.Text = txt;
             toolStripProgressBar1.Value = value;
-            
+            Thread.Sleep(10);
             Application.DoEvents();
         }
 
