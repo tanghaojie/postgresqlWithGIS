@@ -399,6 +399,8 @@ namespace PGDis {
         }
 
         private void btnClip_Click(object sender, EventArgs e) {
+            //dgv.Rows.Clear();
+
             IFeature fea = GetSelectedFeature();
             if (fea == null) {
                 MessageBox.Show("未选中任何要素");
@@ -463,7 +465,7 @@ namespace PGDis {
             long time_pg = sw.ElapsedMilliseconds;
 
             SetProgress("裁剪完成...", 100);
-            //dgv.Rows.Clear();
+           
             AddDgvSplitFlag();
             AddDgvRow("裁剪", "", "");
             AddDgvRow("结果数", count_arcgis.ToString(), count_pg.ToString());
