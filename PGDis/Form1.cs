@@ -11,12 +11,14 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
+using System.Configuration;
 
 namespace PGDis {
     //
     public partial class Form1 : Form {
         //Local gdb
-        string EDGES_GdbPath = @"D:\Data\EDGES.gdb";
+        
+        readonly string EDGES_GdbPath = @"D:\Data\EDGES.gdb";
         string EDGES_FeatureClassName = "EDGES";
         //Pg
         const string HOST = "192.168.1.100";
@@ -49,6 +51,10 @@ namespace PGDis {
 
         public Form1() {
             InitializeComponent();
+
+            //string s=ConfigurationSettings.AppSettings[""];
+            //System.Collections.Specialized.NameValueCollection nv = new System.Collections.Specialized.NameValueCollection();
+            
 
             IFeatureClass us = OpenGdbFeatureClass(@"D:\Data\temp.gdb", "temp");
             IFeatureLayer fl_us = new FeatureLayerClass();
@@ -264,52 +270,79 @@ namespace PGDis {
         }
 
         private void btnIntersect_Click(object sender, EventArgs e) {
-            IFeature fea = GetSelectedFeature();
-            if (fea == null) {
-                MessageBox.Show("未选中任何要素");
-                return;
-            }
-            SetProgress("开始执行空间相交...", 10);
-            ISpatialFilter spatialFilter = SetSpatialFilter(fea);
-            IGeometry geo = fea.Shape;
-            string wkt = geo.ToWellKnownText();
-
-            IFeatureClass fc = OpenGdbFeatureClass(EDGES_GdbPath, EDGES_FeatureClassName);
-
-            Stopwatch sw = new Stopwatch();
-            sw.Restart();
-            //arcgis 
-            SetProgress("ArcGIS空间相交，正在执行...", 40);
-            int intersectCount_arcgis = SearchCount_ArcGIS(fc, spatialFilter);
-
-            sw.Stop();
-            long time_arcgis = sw.ElapsedMilliseconds;
-
-            SetProgress("PG空间相交，正在执行...", 80);
-            sw.Restart();
-            //pg
-            DataSet ds = Execute_PG(GetIntersectCountSql(wkt));
-            int intersectCount_pg = 0;
-            if (ds.Tables.Count > 0) {
-                DataTable dt = ds.Tables[0];
-                if (dt.Rows.Count > 0) {
-                    object obj = dt.Rows[0][0];
-                    if (obj != DBNull.Value && obj != null) {
-                        intersectCount_pg = int.Parse(obj.ToString());
+            try {
+                dgv.Rows.Clear();
+                IFeature fea = GetSelectedFeature();
+                if (fea == null) {
+                    MessageBox.Show("未选中任何要素");
+                    return;
+                }
+                SetProgress("开始执行空间相交...", 10);
+                ISpatialFilter spatialFilter = SetSpatialFilter(fea);
+                IGeometry geo = fea.Shape;
+                string wkt = geo.ToWellKnownText();
+                string sType = "";
+                string sArcgis = "";
+                string sPG = "";
+                if (geo.GeometryType == esriGeometryType.esriGeometryPolygon) {
+                    IArea area = geo as IArea;
+                    if (area != null) {
+                        double b = Math.Abs(area.Area);
+                        sType = "相交要素面积";
+                        sArcgis = sPG = b.ToString();
                     }
                 }
+                else if (geo.GeometryType == esriGeometryType.esriGeometryPolyline) {
+                    IPolyline line = geo as IPolyline;
+                    if (line != null) {
+                        double b = line.Length;
+                        sType = "相交要素长度";
+                        sArcgis = sPG = b.ToString();
+                    }
+                }
+
+                IFeatureClass fc = OpenGdbFeatureClass(EDGES_GdbPath, EDGES_FeatureClassName);
+
+                Stopwatch sw = new Stopwatch();
+                sw.Restart();
+                //arcgis 
+                SetProgress("ArcGIS空间相交，正在执行...", 40);
+                int intersectCount_arcgis = SearchCount_ArcGIS(fc, spatialFilter);
+
+                sw.Stop();
+                long time_arcgis = sw.ElapsedMilliseconds;
+
+                SetProgress("PG空间相交，正在执行...", 80);
+                sw.Restart();
+                //pg
+                DataSet ds = Execute_PG(GetIntersectCountSql(wkt));
+                int intersectCount_pg = 0;
+                if (ds.Tables.Count > 0) {
+                    DataTable dt = ds.Tables[0];
+                    if (dt.Rows.Count > 0) {
+                        object obj = dt.Rows[0][0];
+                        if (obj != DBNull.Value && obj != null) {
+                            intersectCount_pg = int.Parse(obj.ToString());
+                        }
+                    }
+                }
+
+                sw.Stop();
+                long time_pg = sw.ElapsedMilliseconds;
+                SetProgress("空间相交执行完成", 100);
+
+                AddDgvSplitFlag();
+                AddDgvRow("空间相交", "", "");
+                if (!string.IsNullOrEmpty(sType) && !string.IsNullOrEmpty(sArcgis) && !string.IsNullOrEmpty(sPG)) {
+                    AddDgvRow(sType, sArcgis, sPG);
+                }
+                AddDgvRow("相交结果数", intersectCount_arcgis.ToString(), intersectCount_pg.ToString());
+                AddDgvRow("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), (time_pg / 1000.0).ToString(".000"));
+                AddDgvSplitFlag();
             }
-
-            sw.Stop();
-            long time_pg = sw.ElapsedMilliseconds;
-            SetProgress("空间相交执行完成", 100);
-
-            //dgv.Rows.Clear();
-            AddDgvSplitFlag();
-            AddDgvRow("空间相交", "", "");
-            AddDgvRow("相交结果数", intersectCount_arcgis.ToString(), intersectCount_pg.ToString());
-            AddDgvRow("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), (time_pg / 1000.0).ToString(".000"));
-            AddDgvSplitFlag();
+            catch {
+                MessageBox.Show("测试错误，请重试");
+            }
         }
 
         private IFeatureClass OpenGdbFeatureClass(string gdbPath, string fcName) {
@@ -399,79 +432,94 @@ namespace PGDis {
         }
 
         private void btnClip_Click(object sender, EventArgs e) {
-            //dgv.Rows.Clear();
+            try {
+                dgv.Rows.Clear();
 
-            IFeature fea = GetSelectedFeature();
-            if (fea == null) {
-                MessageBox.Show("未选中任何要素");
-                return;
-            }
-            IGeometry geo = fea.Shape;
-            string wkt = geo.ToWellKnownText();
+                IFeature fea = GetSelectedFeature();
+                if (fea == null) {
+                    MessageBox.Show("未选中任何要素");
+                    return;
+                }
+                IGeometry geo = fea.Shape;
+                string wkt = geo.ToWellKnownText();
 
-            if (geo.GeometryType != esriGeometryType.esriGeometryPolygon) {
-                MessageBox.Show("裁剪要素类型错误。[请使用面要素]");
-                return;
-            }
+                if (geo.GeometryType != esriGeometryType.esriGeometryPolygon) {
+                    MessageBox.Show("裁剪要素类型错误。[请使用面要素]");
+                    return;
+                }
+                string sArcgis = "";
+                string sPG = "";
+                IArea area = geo as IArea;
+                if (area != null) {
+                    double b = Math.Abs(area.Area);
+                    sArcgis = sPG = b.ToString();
+                }
 
-            SetProgress("开始执行裁剪...", 10);
-            IFeatureClass clipFC = OpenGdbFeatureClass(DEFAULT_TEMPGDBPATH, POLYGONNAME);
-            ClearFc(clipFC);
-            IFeature clipF = clipFC.CreateFeature();
-            clipF.Shape = geo;
-            clipF.Store();
+                SetProgress("开始执行裁剪...", 10);
+                IFeatureClass clipFC = OpenGdbFeatureClass(DEFAULT_TEMPGDBPATH, POLYGONNAME);
+                ClearFc(clipFC);
+                IFeature clipF = clipFC.CreateFeature();
+                clipF.Shape = geo;
+                clipF.Store();
 
-            IFeatureClass fc = OpenGdbFeatureClass(EDGES_GdbPath, EDGES_FeatureClassName);
+                IFeatureClass fc = OpenGdbFeatureClass(EDGES_GdbPath, EDGES_FeatureClassName);
 
-            Stopwatch sw = new Stopwatch();
-            SetProgress("ArcGIS裁剪，正在执行...", 40);
-            sw.Restart();
-            //arcgis
-            string saveName = "clip" + DateTime.Now.ToFileTime();
-            Clip(fc, clipFC, DEFAULT_TEMPGDBPATH + @"\" + saveName);
-            IFeatureClass saveFc = OpenGdbFeatureClass(DEFAULT_TEMPGDBPATH, saveName);
-            double totalLength_arcgis = 0;
-            IFeatureCursor fcursor = saveFc.Search(null, false);
-            IFeature f = null;
-            int index = saveFc.FindField("SHAPE_LENGTH");
-            if (index > 0) {
-                while ((f = fcursor.NextFeature()) != null) {
-                    object value = f.Value[index];
-                    if (value != DBNull.Value && value != null) {
-                        string sValue = value.ToString();
-                        totalLength_arcgis += double.Parse(f.Value[index].ToString());
+                Stopwatch sw = new Stopwatch();
+                SetProgress("ArcGIS裁剪，正在执行...", 40);
+                sw.Restart();
+                //arcgis
+                string saveName = "clip" + DateTime.Now.ToFileTime();
+                Clip(fc, clipFC, DEFAULT_TEMPGDBPATH + @"\" + saveName);
+                IFeatureClass saveFc = OpenGdbFeatureClass(DEFAULT_TEMPGDBPATH, saveName);
+                double totalLength_arcgis = 0;
+                IFeatureCursor fcursor = saveFc.Search(null, false);
+                IFeature f = null;
+                int index = saveFc.FindField("SHAPE_LENGTH");
+                if (index > 0) {
+                    while ((f = fcursor.NextFeature()) != null) {
+                        object value = f.Value[index];
+                        if (value != DBNull.Value && value != null) {
+                            string sValue = value.ToString();
+                            totalLength_arcgis += double.Parse(f.Value[index].ToString());
+                        }
                     }
                 }
-            }
-            int count_arcgis = saveFc.FeatureCount(null);
-            
-            sw.Stop();
-            long time_arcgis = sw.ElapsedMilliseconds;
+                int count_arcgis = saveFc.FeatureCount(null);
 
-            SetProgress("PG裁剪，正在执行...", 80); 
-            sw.Restart();
-            //pg
-            DataSet ds = Execute_PG(GetIntersectionCountAndSumLengthSql(wkt));
-            int count_pg = 0; 
-            double totalLength_pg = 0;
-            if (ds.Tables.Count > 0) {
-                DataTable dt = ds.Tables[0];
-                if (dt.Rows.Count > 0) {
-                    count_pg = int.Parse(dt.Rows[0][0].ToString());
-                    totalLength_pg = double.Parse(dt.Rows[0][1].ToString());
+                sw.Stop();
+                long time_arcgis = sw.ElapsedMilliseconds;
+
+                SetProgress("PG裁剪，正在执行...", 80);
+                sw.Restart();
+                //pg
+                DataSet ds = Execute_PG(GetIntersectionCountAndSumLengthSql(wkt));
+                int count_pg = 0;
+                double totalLength_pg = 0;
+                if (ds.Tables.Count > 0) {
+                    DataTable dt = ds.Tables[0];
+                    if (dt.Rows.Count > 0) {
+                        count_pg = int.Parse(dt.Rows[0][0].ToString());
+                        totalLength_pg = double.Parse(dt.Rows[0][1].ToString());
+                    }
                 }
-            }
-            sw.Stop(); 
-            long time_pg = sw.ElapsedMilliseconds;
+                sw.Stop();
+                long time_pg = sw.ElapsedMilliseconds;
 
-            SetProgress("裁剪完成...", 100);
-           
-            AddDgvSplitFlag();
-            AddDgvRow("裁剪", "", "");
-            AddDgvRow("结果数", count_arcgis.ToString(), count_pg.ToString());
-            AddDgvRow("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), (time_pg / 1000.0).ToString(".000"));
-            AddDgvRow("裁剪后数据长度", totalLength_arcgis.ToString(), totalLength_pg.ToString());
-            AddDgvSplitFlag();
+                SetProgress("裁剪完成...", 100);
+
+                AddDgvSplitFlag();
+                AddDgvRow("裁剪", "", "");
+                if (!string.IsNullOrEmpty(sArcgis) && !string.IsNullOrEmpty(sPG)) {
+                    AddDgvRow("裁剪面积", sArcgis, sPG);
+                }
+                AddDgvRow("结果数", count_arcgis.ToString(), count_pg.ToString());
+                AddDgvRow("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), (time_pg / 1000.0).ToString(".000"));
+                AddDgvRow("裁剪后数据长度", totalLength_arcgis.ToString(), totalLength_pg.ToString());
+                AddDgvSplitFlag();
+            }
+            catch {
+                MessageBox.Show("测试错误，请重试");
+            }
         }
 
         private void AddDgvSplitFlag() {
@@ -502,7 +550,19 @@ namespace PGDis {
         }
 
         private void btnRefresh_Click(object sender, EventArgs e) {
+
             axMapControl.Refresh();
         }
+
+        private void Left3kW() {
+            IFeatureClass fc = OpenGdbFeatureClass(@"D:\Data\EDGES3kW.gdb", "EDGES");
+            IQueryFilter qf = new QueryFilterClass();
+            qf.WhereClause = "ID > 30000000";
+            (fc as ITable).DeleteSearchedRows(qf);
+
+            MessageBox.Show("finish");
+        }
+
+
     }
 }
