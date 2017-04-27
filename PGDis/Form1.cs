@@ -22,6 +22,10 @@ namespace PGDis {
         static readonly string EDGES_GdbPath = ConfigurationManager.AppSettings["GdbPath"];
         static readonly string EDGES_FeatureClassName = ConfigurationManager.AppSettings["GdbFeatureClassName"];
 
+        //my define show gdb
+        static readonly string MyDefineGdbPath= ConfigurationManager.AppSettings["UserGdbPath"];
+        static readonly string MyDefineGdbFcName = ConfigurationManager.AppSettings["UserGdbFcName"];
+
         //Pg
         //const string HOST = "192.168.1.100";
         //const int PORT = 5432;
@@ -71,10 +75,12 @@ namespace PGDis {
                 axMapControl.AddLayer(layer);
             }
             //myUS
-            IFeatureClass us = OpenGdbFeatureClass(@"D:\Data\temp.gdb", "temp");
-            IFeatureLayer fl_us = new FeatureLayerClass();
-            fl_us.FeatureClass = us;
-            axMapControl.AddLayer(fl_us);
+            if (!string.IsNullOrEmpty(MyDefineGdbPath) && !string.IsNullOrEmpty(MyDefineGdbFcName)) {
+                IFeatureClass us = OpenGdbFeatureClass(MyDefineGdbPath, MyDefineGdbFcName);
+                IFeatureLayer fl_us = new FeatureLayerClass();
+                fl_us.FeatureClass = us;
+                axMapControl.AddLayer(fl_us);
+            }
             //default draw polygon polyline gdb file
             IWorkspace ws = GDBWorkspaceFactory.OpenFromFile(DEFAULT_GDBPATH, 0);
             Wse_Draw = ws as IWorkspaceEdit;
