@@ -38,7 +38,7 @@
             this.btnDrawPolyline = new System.Windows.Forms.Button();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
-            this.btnRefresh = new System.Windows.Forms.Button();
+            this.btnOnlyClip = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
             this.btnClip = new System.Windows.Forms.Button();
             this.btnIntersect = new System.Windows.Forms.Button();
@@ -52,6 +52,8 @@
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
+            this.btnRefresh = new System.Windows.Forms.Button();
+            this.btnQuery = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.axLicenseControl1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.axMapControl)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -86,7 +88,7 @@
             this.axMapControl.Location = new System.Drawing.Point(0, 0);
             this.axMapControl.Name = "axMapControl";
             this.axMapControl.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("axMapControl.OcxState")));
-            this.axMapControl.Size = new System.Drawing.Size(466, 452);
+            this.axMapControl.Size = new System.Drawing.Size(551, 553);
             this.axMapControl.TabIndex = 1;
             this.axMapControl.OnMouseDown += new ESRI.ArcGIS.Controls.IMapControlEvents2_Ax_OnMouseDownEventHandler(this.axMapControl_OnMouseDown);
             // 
@@ -103,7 +105,7 @@
             // btnDrawPolygon
             // 
             this.btnDrawPolygon.Enabled = false;
-            this.btnDrawPolygon.Location = new System.Drawing.Point(3, 54);
+            this.btnDrawPolygon.Location = new System.Drawing.Point(3, 38);
             this.btnDrawPolygon.Name = "btnDrawPolygon";
             this.btnDrawPolygon.Size = new System.Drawing.Size(75, 23);
             this.btnDrawPolygon.TabIndex = 3;
@@ -134,7 +136,7 @@
             // btnDrawPolyline
             // 
             this.btnDrawPolyline.Enabled = false;
-            this.btnDrawPolyline.Location = new System.Drawing.Point(3, 83);
+            this.btnDrawPolyline.Location = new System.Drawing.Point(3, 67);
             this.btnDrawPolyline.Name = "btnDrawPolyline";
             this.btnDrawPolyline.Size = new System.Drawing.Size(75, 23);
             this.btnDrawPolyline.TabIndex = 7;
@@ -155,8 +157,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.splitContainer2);
-            this.splitContainer1.Size = new System.Drawing.Size(862, 452);
-            this.splitContainer1.SplitterDistance = 466;
+            this.splitContainer1.Size = new System.Drawing.Size(984, 553);
+            this.splitContainer1.SplitterDistance = 551;
             this.splitContainer1.TabIndex = 10;
             // 
             // splitContainer2
@@ -169,6 +171,8 @@
             // 
             // splitContainer2.Panel1
             // 
+            this.splitContainer2.Panel1.Controls.Add(this.btnQuery);
+            this.splitContainer2.Panel1.Controls.Add(this.btnOnlyClip);
             this.splitContainer2.Panel1.Controls.Add(this.btnRefresh);
             this.splitContainer2.Panel1.Controls.Add(this.label2);
             this.splitContainer2.Panel1.Controls.Add(this.btnClip);
@@ -183,23 +187,23 @@
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.dgv);
-            this.splitContainer2.Size = new System.Drawing.Size(392, 452);
+            this.splitContainer2.Size = new System.Drawing.Size(429, 553);
             this.splitContainer2.SplitterDistance = 84;
             this.splitContainer2.TabIndex = 0;
             // 
-            // btnRefresh
+            // btnOnlyClip
             // 
-            this.btnRefresh.Location = new System.Drawing.Point(3, 426);
-            this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(75, 23);
-            this.btnRefresh.TabIndex = 12;
-            this.btnRefresh.Text = "刷新";
-            this.btnRefresh.UseVisualStyleBackColor = true;
-            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            this.btnOnlyClip.Location = new System.Drawing.Point(3, 314);
+            this.btnOnlyClip.Name = "btnOnlyClip";
+            this.btnOnlyClip.Size = new System.Drawing.Size(75, 23);
+            this.btnOnlyClip.TabIndex = 13;
+            this.btnOnlyClip.Text = "裁剪";
+            this.btnOnlyClip.UseVisualStyleBackColor = true;
+            this.btnOnlyClip.Click += new System.EventHandler(this.btnOnlyClip_Click);
             // 
             // label2
             // 
-            this.label2.Location = new System.Drawing.Point(3, 269);
+            this.label2.Location = new System.Drawing.Point(3, 282);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(75, 29);
             this.label2.TabIndex = 11;
@@ -207,17 +211,17 @@
             // 
             // btnClip
             // 
-            this.btnClip.Location = new System.Drawing.Point(3, 301);
+            this.btnClip.Location = new System.Drawing.Point(3, 343);
             this.btnClip.Name = "btnClip";
             this.btnClip.Size = new System.Drawing.Size(75, 23);
             this.btnClip.TabIndex = 10;
-            this.btnClip.Text = "裁剪";
+            this.btnClip.Text = "裁剪统计";
             this.btnClip.UseVisualStyleBackColor = true;
             this.btnClip.Click += new System.EventHandler(this.btnClip_Click);
             // 
             // btnIntersect
             // 
-            this.btnIntersect.Location = new System.Drawing.Point(3, 231);
+            this.btnIntersect.Location = new System.Drawing.Point(3, 229);
             this.btnIntersect.Name = "btnIntersect";
             this.btnIntersect.Size = new System.Drawing.Size(75, 23);
             this.btnIntersect.TabIndex = 8;
@@ -227,7 +231,7 @@
             // 
             // label1
             // 
-            this.label1.Location = new System.Drawing.Point(3, 204);
+            this.label1.Location = new System.Drawing.Point(3, 202);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(75, 29);
             this.label1.TabIndex = 9;
@@ -250,7 +254,7 @@
             this.dgv.RowHeadersVisible = false;
             this.dgv.RowTemplate.Height = 23;
             this.dgv.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgv.Size = new System.Drawing.Size(304, 452);
+            this.dgv.Size = new System.Drawing.Size(341, 553);
             this.dgv.TabIndex = 0;
             // 
             // C
@@ -283,14 +287,14 @@
             this.toolStripProgressBar1});
             this.statusStrip1.Location = new System.Drawing.Point(0, 0);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(862, 25);
+            this.statusStrip1.Size = new System.Drawing.Size(984, 25);
             this.statusStrip1.TabIndex = 11;
             this.statusStrip1.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(726, 20);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(848, 20);
             this.toolStripStatusLabel1.Spring = true;
             // 
             // toolStripStatusLabel2
@@ -320,16 +324,36 @@
             // splitContainer3.Panel2
             // 
             this.splitContainer3.Panel2.Controls.Add(this.statusStrip1);
-            this.splitContainer3.Size = new System.Drawing.Size(862, 478);
-            this.splitContainer3.SplitterDistance = 452;
+            this.splitContainer3.Size = new System.Drawing.Size(984, 579);
+            this.splitContainer3.SplitterDistance = 553;
             this.splitContainer3.SplitterWidth = 1;
             this.splitContainer3.TabIndex = 12;
+            // 
+            // btnRefresh
+            // 
+            this.btnRefresh.Location = new System.Drawing.Point(3, 517);
+            this.btnRefresh.Name = "btnRefresh";
+            this.btnRefresh.Size = new System.Drawing.Size(75, 23);
+            this.btnRefresh.TabIndex = 12;
+            this.btnRefresh.Text = "刷新";
+            this.btnRefresh.UseVisualStyleBackColor = true;
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+            // 
+            // btnQuery
+            // 
+            this.btnQuery.Location = new System.Drawing.Point(3, 405);
+            this.btnQuery.Name = "btnQuery";
+            this.btnQuery.Size = new System.Drawing.Size(75, 23);
+            this.btnQuery.TabIndex = 14;
+            this.btnQuery.Text = "查询";
+            this.btnQuery.UseVisualStyleBackColor = true;
+            this.btnQuery.Click += new System.EventHandler(this.btnQuery_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(862, 478);
+            this.ClientSize = new System.Drawing.Size(984, 579);
             this.Controls.Add(this.splitContainer3);
             this.Controls.Add(this.axLicenseControl1);
             this.Name = "Form1";
@@ -380,7 +404,9 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
+        private System.Windows.Forms.Button btnOnlyClip;
         private System.Windows.Forms.Button btnRefresh;
+        private System.Windows.Forms.Button btnQuery;
     }
 }
 

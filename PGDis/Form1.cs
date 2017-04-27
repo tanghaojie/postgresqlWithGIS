@@ -17,16 +17,29 @@ namespace PGDis {
     //
     public partial class Form1 : Form {
         //Local gdb
-        
-        readonly string EDGES_GdbPath = @"D:\Data\EDGES.gdb";
-        string EDGES_FeatureClassName = "EDGES";
+        //readonly string EDGES_GdbPath = @"D:\Data\EDGES.gdb";
+        //readonly string EDGES_FeatureClassName = "EDGES";
+        static readonly string EDGES_GdbPath = ConfigurationManager.AppSettings["GdbPath"];
+        static readonly string EDGES_FeatureClassName = ConfigurationManager.AppSettings["GdbFeatureClassName"];
+
         //Pg
-        const string HOST = "192.168.1.100";
-        const int PORT = 5432;
-        const string USER = "postgres";
-        const string PASSWORD = "admin";
-        const string DB = "postgis_rcl";
-        const string TABLENAME = "edges";
+        //const string HOST = "192.168.1.100";
+        //const int PORT = 5432;
+        //const string USER = "postgres";
+        //const string PASSWORD = "admin";
+        //const string DB = "postgis_rcl";
+        //const string TABLENAME = "edges";
+        static readonly string HOST = ConfigurationManager.AppSettings["PgHost"];
+        static readonly string PORT = ConfigurationManager.AppSettings["PgPort"];
+        static readonly string USER = ConfigurationManager.AppSettings["PgUser"];
+        static readonly string PASSWORD = ConfigurationManager.AppSettings["PgPass"];
+        static readonly string DB = ConfigurationManager.AppSettings["PgDb"];
+        static readonly string TABLENAME = ConfigurationManager.AppSettings["PgTableName"];
+
+        //server
+        static readonly string ServerLayerUrl = ConfigurationManager.AppSettings["ServerLayerUrl"];
+        static readonly string ServerLayerName = ConfigurationManager.AppSettings["ServerName"];
+
         static string connString = string.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};CommandTimeout=0;",
                 HOST, PORT, USER, PASSWORD, DB);
 
@@ -51,16 +64,18 @@ namespace PGDis {
 
         public Form1() {
             InitializeComponent();
-
-            //string s=ConfigurationSettings.AppSettings[""];
-            //System.Collections.Specialized.NameValueCollection nv = new System.Collections.Specialized.NameValueCollection();
-            
-
+            //server
+            if (!string.IsNullOrEmpty(ServerLayerUrl) && !string.IsNullOrEmpty(ServerLayerName)) {
+                OpenServer os = new OpenServer();
+                ILayer layer = os.GetServerLyr(ServerLayerUrl, ServerLayerName, false);
+                axMapControl.AddLayer(layer);
+            }
+            //myUS
             IFeatureClass us = OpenGdbFeatureClass(@"D:\Data\temp.gdb", "temp");
             IFeatureLayer fl_us = new FeatureLayerClass();
             fl_us.FeatureClass = us;
             axMapControl.AddLayer(fl_us);
-
+            //default draw polygon polyline gdb file
             IWorkspace ws = GDBWorkspaceFactory.OpenFromFile(DEFAULT_GDBPATH, 0);
             Wse_Draw = ws as IWorkspaceEdit;
 
@@ -73,14 +88,10 @@ namespace PGDis {
             Fl_DrawPolyline = new FeatureLayerClass();
             Fl_DrawPolyline.FeatureClass = Fc_DrawPolyline;
             axMapControl.AddLayer(Fl_DrawPolyline);
-
+            //default mouse pointer
             Default_Pointer = esriControlsMousePointer.esriPointerDefault;
             axMapControl.MousePointer = Default_Pointer;
             axMapControl.MouseIcon = Properties.Resources.EditingEditTool;
-
-            //OpenServer os = new OpenServer();
-            //ILayer layer = os.GetServerLyr(@"http://localhost:6080/arcgis/admin", "temp/temp", false);
-            //axMapControl.AddLayer(layer, 2);
         }
 
         private void axMapControl_OnMouseDown(object sender, ESRI.ArcGIS.Controls.IMapControlEvents2_OnMouseDownEvent e) {
@@ -277,7 +288,10 @@ namespace PGDis {
                     MessageBox.Show("未选中任何要素");
                     return;
                 }
+                AddDgvSplitFlag();
                 SetProgress("开始执行空间相交...", 10);
+                AddDgvRow("空间相交", "", "");
+
                 ISpatialFilter spatialFilter = SetSpatialFilter(fea);
                 IGeometry geo = fea.Shape;
                 string wkt = geo.ToWellKnownText();
@@ -300,6 +314,11 @@ namespace PGDis {
                         sArcgis = sPG = b.ToString();
                     }
                 }
+                if (!string.IsNullOrEmpty(sType) && !string.IsNullOrEmpty(sArcgis) && !string.IsNullOrEmpty(sPG)) {
+                    AddDgvRow(sType, sArcgis, sPG);
+                }
+                AddDgvRow("相交结果数", "", "");
+                AddDgvRow("时间（秒）", "", "");
 
                 IFeatureClass fc = OpenGdbFeatureClass(EDGES_GdbPath, EDGES_FeatureClassName);
 
@@ -314,35 +333,64 @@ namespace PGDis {
 
                 SetProgress("PG空间相交，正在执行...", 80);
                 sw.Restart();
+
+                AppendText("相交结果数", intersectCount_arcgis.ToString(), null);
+                AppendText("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), null);
+
                 //pg
-                DataSet ds = Execute_PG(GetIntersectCountSql(wkt));
+                //DataSet ds = Execute_PG(GetIntersectCountSql(wkt));
                 int intersectCount_pg = 0;
+                //DataTable dt = null;
+                //if (ds.Tables.Count > 0) {
+                //    dt = ds.Tables[0];
+                //    if (dt.Rows.Count > 0) {
+                //        object obj = dt.Rows[0][0];
+                //        if (obj != DBNull.Value && obj != null) {
+                //            intersectCount_pg = int.Parse(obj.ToString());
+                //        }
+                //    }
+                //}
+                DataSet ds = Execute_PG(GetIntersectSql(wkt));
+                DataTable dt = null;
                 if (ds.Tables.Count > 0) {
-                    DataTable dt = ds.Tables[0];
-                    if (dt.Rows.Count > 0) {
-                        object obj = dt.Rows[0][0];
-                        if (obj != DBNull.Value && obj != null) {
-                            intersectCount_pg = int.Parse(obj.ToString());
-                        }
-                    }
+                    dt = ds.Tables[0];
+                    intersectCount_pg = dt.Rows.Count;
                 }
 
                 sw.Stop();
                 long time_pg = sw.ElapsedMilliseconds;
-                SetProgress("空间相交执行完成", 100);
+                AppendText("相交结果数", null, intersectCount_pg.ToString());
+                AppendText("时间（秒）", null, (time_pg / 1000.0).ToString(".000"));
 
+                SetProgress("空间相交执行完成", 100);
                 AddDgvSplitFlag();
-                AddDgvRow("空间相交", "", "");
-                if (!string.IsNullOrEmpty(sType) && !string.IsNullOrEmpty(sArcgis) && !string.IsNullOrEmpty(sPG)) {
-                    AddDgvRow(sType, sArcgis, sPG);
+                if (dt != null) {
+                    AttributeForm af = new AttributeForm(dt);
+                    af.Show();
                 }
-                AddDgvRow("相交结果数", intersectCount_arcgis.ToString(), intersectCount_pg.ToString());
-                AddDgvRow("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), (time_pg / 1000.0).ToString(".000"));
-                AddDgvSplitFlag();
             }
-            catch {
+            catch (Exception ex) {
                 MessageBox.Show("测试错误，请重试");
             }
+        }
+
+        private void AppendText(string funRowName, string arcgis, string pg) {
+            foreach (DataGridViewRow row in dgv.Rows) {
+                object value = row.Cells["C"].Value; ;
+                if (value == null || value == DBNull.Value) {
+                    continue;
+                }
+                string s = value.ToString();
+                if (s.ToUpper() == funRowName.ToUpper()) {
+                    if (!string.IsNullOrEmpty(arcgis)) {
+                        row.Cells["CARCGIS"].Value = arcgis;
+                    }
+                    if (!string.IsNullOrEmpty(pg)) {
+                        row.Cells["CPG"].Value = pg;
+                    }
+                }
+            }
+            Application.DoEvents();
         }
 
         private IFeatureClass OpenGdbFeatureClass(string gdbPath, string fcName) {
@@ -423,12 +471,20 @@ namespace PGDis {
             //return "SELECT *,st_astext(geom) as wkt FROM EDGES_test WHERE ST_Intersects(geom,ST_GeomFromText('" + wkt + "',4326))";
         }
 
+        private string GetIntersectSql(string wkt) {
+            return "SELECT *,st_astext(geom) FROM " + TABLENAME + " WHERE ST_Intersects(geom,ST_GeomFromText('" + wkt + "',4326))";
+        }
+
         private string GetIntersectionSql(string wkt) {
-            return "SELECT ST_AsText(ST_Intersection(geom,ST_GeomFromText('" + wkt + "', 4326) )) AS clip FROM " + TABLENAME + " WHERE ST_Intersects( geom,ST_GeomFromText('" + wkt + "', 4326) )";
+            return "SELECT *,ST_AsText(ST_Intersection(geom,ST_GeomFromText('" + wkt + "', 4326) )) AS clip FROM " + TABLENAME + " WHERE ST_Intersects( geom,ST_GeomFromText('" + wkt + "', 4326) )";
         }
 
         private string GetIntersectionCountAndSumLengthSql(string wkt) {
             return "SELECT count(*),sum(st_length(ST_AsText(ST_Intersection(geom,ST_GeomFromText('" + wkt + "', 4326) )))) FROM " + TABLENAME + " WHERE ST_Intersects( geom,ST_GeomFromText('" + wkt + "', 4326) )";
+        }
+
+        private string GetAllWhereSql(string whereSql) {
+            return "SELECT * FROM " + TABLENAME + " WHERE " + whereSql;
         }
 
         private void btnClip_Click(object sender, EventArgs e) {
@@ -456,6 +512,12 @@ namespace PGDis {
                 }
 
                 SetProgress("开始执行裁剪...", 10);
+                AddDgvSplitFlag();
+                AddDgvRow("裁剪统计", "", "");
+                if (!string.IsNullOrEmpty(sArcgis) && !string.IsNullOrEmpty(sPG)) {
+                    AddDgvRow("裁剪面积", sArcgis, sPG);
+                }
+
                 IFeatureClass clipFC = OpenGdbFeatureClass(DEFAULT_TEMPGDBPATH, POLYGONNAME);
                 ClearFc(clipFC);
                 IFeature clipF = clipFC.CreateFeature();
@@ -466,6 +528,11 @@ namespace PGDis {
 
                 Stopwatch sw = new Stopwatch();
                 SetProgress("ArcGIS裁剪，正在执行...", 40);
+
+                AddDgvRow("结果数", "", "");
+                AddDgvRow("时间（秒）", "", "");
+                AddDgvRow("裁剪结果总长", "", "");
+
                 sw.Restart();
                 //arcgis
                 string saveName = "clip" + DateTime.Now.ToFileTime();
@@ -488,10 +555,13 @@ namespace PGDis {
 
                 sw.Stop();
                 long time_arcgis = sw.ElapsedMilliseconds;
+                AppendText("结果数", count_arcgis.ToString(), null);
+                AppendText("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), null);
+                AppendText("裁剪结果总长", totalLength_arcgis.ToString(), null);
 
+                //pg
                 SetProgress("PG裁剪，正在执行...", 80);
                 sw.Restart();
-                //pg
                 DataSet ds = Execute_PG(GetIntersectionCountAndSumLengthSql(wkt));
                 int count_pg = 0;
                 double totalLength_pg = 0;
@@ -504,18 +574,109 @@ namespace PGDis {
                 }
                 sw.Stop();
                 long time_pg = sw.ElapsedMilliseconds;
+                AppendText("结果数", "", count_pg.ToString());
+                AppendText("时间（秒）", "", (time_pg / 1000.0).ToString(".000"));
+                AppendText("裁剪结果总长", "", totalLength_pg.ToString());
 
                 SetProgress("裁剪完成...", 100);
+                AddDgvSplitFlag();
+            }
+            catch {
+                MessageBox.Show("测试错误，请重试");
+            }
+        }
 
+        private void btnOnlyClip_Click(object sender, EventArgs e) {
+            try {
+                dgv.Rows.Clear();
+
+                IFeature fea = GetSelectedFeature();
+                if (fea == null) {
+                    MessageBox.Show("未选中任何要素");
+                    return;
+                }
+                IGeometry geo = fea.Shape;
+                string wkt = geo.ToWellKnownText();
+
+                if (geo.GeometryType != esriGeometryType.esriGeometryPolygon) {
+                    MessageBox.Show("裁剪要素类型错误。[请使用面要素]");
+                    return;
+                }
+                string sArcgis = "";
+                string sPG = "";
+                IArea area = geo as IArea;
+                if (area != null) {
+                    double b = Math.Abs(area.Area);
+                    sArcgis = sPG = b.ToString();
+                }
+
+                SetProgress("开始执行裁剪...", 10);
                 AddDgvSplitFlag();
                 AddDgvRow("裁剪", "", "");
                 if (!string.IsNullOrEmpty(sArcgis) && !string.IsNullOrEmpty(sPG)) {
                     AddDgvRow("裁剪面积", sArcgis, sPG);
                 }
-                AddDgvRow("结果数", count_arcgis.ToString(), count_pg.ToString());
-                AddDgvRow("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), (time_pg / 1000.0).ToString(".000"));
-                AddDgvRow("裁剪后数据长度", totalLength_arcgis.ToString(), totalLength_pg.ToString());
+
+                IFeatureClass clipFC = OpenGdbFeatureClass(DEFAULT_TEMPGDBPATH, POLYGONNAME);
+                ClearFc(clipFC);
+                IFeature clipF = clipFC.CreateFeature();
+                clipF.Shape = geo;
+                clipF.Store();
+
+                IFeatureClass fc = OpenGdbFeatureClass(EDGES_GdbPath, EDGES_FeatureClassName);
+
+                Stopwatch sw = new Stopwatch();
+                SetProgress("ArcGIS裁剪，正在执行...", 40);
+
+                AddDgvRow("结果数", "", "");
+                AddDgvRow("时间（秒）", "", "");
+
+                sw.Restart();
+                //arcgis
+                string saveName = "clip" + DateTime.Now.ToFileTime();
+                Clip(fc, clipFC, DEFAULT_TEMPGDBPATH + @"\" + saveName);
+                IFeatureClass saveFc = OpenGdbFeatureClass(DEFAULT_TEMPGDBPATH, saveName);
+                //double totalLength_arcgis = 0;
+                //IFeatureCursor fcursor = saveFc.Search(null, false);
+                //IFeature f = null;
+                //int index = saveFc.FindField("SHAPE_LENGTH");
+                //if (index > 0) {
+                //    while ((f = fcursor.NextFeature()) != null) {
+                //        object value = f.Value[index];
+                //        if (value != DBNull.Value && value != null) {
+                //            string sValue = value.ToString();
+                //            totalLength_arcgis += double.Parse(f.Value[index].ToString());
+                //        }
+                //    }
+                //}
+                int count_arcgis = saveFc.FeatureCount(null);
+
+                sw.Stop();
+                long time_arcgis = sw.ElapsedMilliseconds;
+                AppendText("结果数", count_arcgis.ToString(), null);
+                AppendText("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), null);
+
+                //pg
+                SetProgress("PG裁剪，正在执行...", 80);
+                sw.Restart();
+                DataSet ds = Execute_PG(GetIntersectionSql(wkt));
+                int count_pg = 0;
+                DataTable dt = null;
+                if (ds.Tables.Count > 0) {
+                    dt = ds.Tables[0];
+                    count_pg = dt.Rows.Count;
+                }
+                sw.Stop();
+                long time_pg = sw.ElapsedMilliseconds;
+                AppendText("结果数", "", count_pg.ToString());
+                AppendText("时间（秒）", "", (time_pg / 1000.0).ToString(".000"));
+
+                SetProgress("裁剪完成...", 100);
                 AddDgvSplitFlag();
+                if (dt != null) {
+                    AttributeForm af = new AttributeForm(dt);
+                    af.Show();
+                }
             }
             catch {
                 MessageBox.Show("测试错误，请重试");
@@ -532,6 +693,7 @@ namespace PGDis {
             row.Cells["C"].Value = fun;
             row.Cells["CARCGIS"].Value = arcgis;
             row.Cells["CPG"].Value = pg;
+            Application.DoEvents();
         }
 
         private void ClearFc(IFeatureClass fc) {
@@ -563,6 +725,70 @@ namespace PGDis {
             MessageBox.Show("finish");
         }
 
+        private void btnQuery_Click(object sender, EventArgs e) {
+            try {
+                QueryForm qf = new QueryForm();
+                if (qf.ShowDialog() != DialogResult.OK) {
+                    return;
+                }
+                string txt = qf.QueryTxt;
+                string whereSql = "fullname = '" + txt + "'";
 
+                dgv.Rows.Clear();
+
+                SetProgress("开始查询'" + txt + "'...", 10);
+                AddDgvSplitFlag();
+                AddDgvRow("查询", "", "");
+
+                IFeatureClass fc = OpenGdbFeatureClass(EDGES_GdbPath, EDGES_FeatureClassName);
+
+                Stopwatch sw = new Stopwatch();
+                SetProgress("ArcGIS查询，正在执行...", 40);
+
+                AddDgvRow("结果数", "", "");
+                AddDgvRow("时间（秒）", "", "");
+
+                sw.Restart();
+                //arcgis
+                IQueryFilter queryFilter = new QueryFilterClass();
+                queryFilter.WhereClause = whereSql;
+                double count_arcgis = 0;
+                IFeatureCursor fcursor = fc.Search(queryFilter, false);
+                IFeature f = null;
+                while ((f = fcursor.NextFeature()) != null) {
+                    count_arcgis++;
+                }
+
+                sw.Stop();
+                long time_arcgis = sw.ElapsedMilliseconds;
+                AppendText("结果数", count_arcgis.ToString(), null);
+                AppendText("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), null);
+
+                //pg
+                SetProgress("PG查询，正在执行...", 80);
+                sw.Restart();
+                DataSet ds = Execute_PG(GetAllWhereSql(whereSql));
+                sw.Stop();
+                int count_pg = 0;
+                DataTable dt = null;
+                if (ds.Tables.Count > 0) {
+                    dt = ds.Tables[0];
+                    count_pg = dt.Rows.Count;
+                }
+                long time_pg = sw.ElapsedMilliseconds;
+                AppendText("结果数", "", count_pg.ToString());
+                AppendText("时间（秒）", "", (time_pg / 1000.0).ToString(".000"));
+
+                SetProgress("查询完成...", 100);
+                AddDgvSplitFlag();
+                if (dt != null) {
+                    AttributeForm af = new AttributeForm(dt);
+                    af.Show();
+                }
+            }
+            catch {
+                MessageBox.Show("测试错误，请重试");
+            }
+        }
     }
 }
