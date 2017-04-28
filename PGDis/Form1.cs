@@ -12,6 +12,8 @@ using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
 using System.Configuration;
+using System.Collections.ObjectModel;
+using System.IO;
 
 namespace PGDis {
     //
@@ -23,7 +25,7 @@ namespace PGDis {
         static readonly string EDGES_FeatureClassName = ConfigurationManager.AppSettings["GdbFeatureClassName"];
 
         //my define show gdb
-        static readonly string MyDefineGdbPath= ConfigurationManager.AppSettings["UserGdbPath"];
+        static readonly string MyDefineGdbPath = ConfigurationManager.AppSettings["UserGdbPath"];
         static readonly string MyDefineGdbFcName = ConfigurationManager.AppSettings["UserGdbFcName"];
 
         //Pg
@@ -43,6 +45,9 @@ namespace PGDis {
         //server
         static readonly string ServerLayerUrl = ConfigurationManager.AppSettings["ServerLayerUrl"];
         static readonly string ServerLayerName = ConfigurationManager.AppSettings["ServerName"];
+
+        //Log Path
+        static readonly string LogPath = ConfigurationManager.AppSettings["LogPath"];
 
         static string connString = string.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};CommandTimeout=0;",
                 HOST, PORT, USER, PASSWORD, DB);
@@ -278,6 +283,14 @@ namespace PGDis {
             return ds;
         }
 
+        private NpgsqlDataReader ExecuteReader_PG(string sql) {
+            NpgsqlConnection conn = new NpgsqlConnection(connString);
+            conn.Open();
+            NpgsqlCommand cmd = new NpgsqlCommand(sql, conn);
+            NpgsqlDataReader reader = cmd.ExecuteReader(CommandBehavior.CloseConnection);
+            return reader;
+        }
+
         private ISpatialFilter SetSpatialFilter(IFeature intersectF, esriSpatialRelEnum spatialRelEnum = esriSpatialRelEnum.esriSpatialRelIntersects) {
             ISpatialFilter spatialFilter = new SpatialFilterClass();
             spatialFilter.Geometry = intersectF.Shape;
@@ -338,14 +351,12 @@ namespace PGDis {
                 long time_arcgis = sw.ElapsedMilliseconds;
 
                 SetProgress("PG空间相交，正在执行...", 80);
-                sw.Restart();
-
                 AppendText("相交结果数", intersectCount_arcgis.ToString(), null);
                 AppendText("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), null);
+                sw.Restart();
 
                 //pg
                 //DataSet ds = Execute_PG(GetIntersectCountSql(wkt));
-                int intersectCount_pg = 0;
                 //DataTable dt = null;
                 //if (ds.Tables.Count > 0) {
                 //    dt = ds.Tables[0];
@@ -356,12 +367,40 @@ namespace PGDis {
                 //        }
                 //    }
                 //}
-                DataSet ds = Execute_PG(GetIntersectSql(wkt));
-                DataTable dt = null;
-                if (ds.Tables.Count > 0) {
-                    dt = ds.Tables[0];
-                    intersectCount_pg = dt.Rows.Count;
+
+                //int intersectCount_pg = 0;
+                //DataSet ds = Execute_PG(GetIntersectSql(wkt));
+                //DataTable dt = null;
+                //if (ds.Tables.Count > 0) {
+                //    dt = ds.Tables[0];
+                //    intersectCount_pg = dt.Rows.Count;
+                //}
+
+                int intersectCount_pg = 0;
+                NpgsqlDataReader reader = ExecuteReader_PG(GetIntersectSql(wkt));
+                DataTable dt = new DataTable();
+                DataColumn col;
+                int fCount = reader.FieldCount;
+                for (int i = 0; i < fCount; i++) {
+                    col = new DataColumn();
+                    col.ColumnName = reader.GetName(i);
+                    col.DataType = reader.GetFieldType(i);
+                    dt.Columns.Add(col);
                 }
+                DataRow row;
+                string fName;
+                while (reader.Read()) {
+                    if (intersectCount_pg <= 50) {
+                        row = dt.NewRow();
+                        for (int i = 0; i < fCount; i++) {
+                            fName = dt.Columns[i].ColumnName;
+                            row[fName] = reader[fName];
+                        }
+                        dt.Rows.Add(row);
+                    }
+                    intersectCount_pg++;
+                }
+                reader.Close();
 
                 sw.Stop();
                 long time_pg = sw.ElapsedMilliseconds;
@@ -376,6 +415,7 @@ namespace PGDis {
                 }
             }
             catch (Exception ex) {
+                Log(ex.Message + "-----" + ex.StackTrace);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -578,6 +618,7 @@ namespace PGDis {
                         totalLength_pg = double.Parse(dt.Rows[0][1].ToString());
                     }
                 }
+
                 sw.Stop();
                 long time_pg = sw.ElapsedMilliseconds;
                 AppendText("结果数", "", count_pg.ToString());
@@ -587,7 +628,8 @@ namespace PGDis {
                 SetProgress("裁剪完成...", 100);
                 AddDgvSplitFlag();
             }
-            catch {
+            catch (Exception ex) {
+                Log(ex.Message + "-----" + ex.StackTrace);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -665,13 +707,40 @@ namespace PGDis {
                 //pg
                 SetProgress("PG裁剪，正在执行...", 80);
                 sw.Restart();
-                DataSet ds = Execute_PG(GetIntersectionSql(wkt));
+                //DataSet ds = Execute_PG(GetIntersectionSql(wkt));
+                //int count_pg = 0;
+                //DataTable dt = null;
+                //if (ds.Tables.Count > 0) {
+                //    dt = ds.Tables[0];
+                //    count_pg = dt.Rows.Count;
+                //}
+
                 int count_pg = 0;
-                DataTable dt = null;
-                if (ds.Tables.Count > 0) {
-                    dt = ds.Tables[0];
-                    count_pg = dt.Rows.Count;
+                NpgsqlDataReader reader = ExecuteReader_PG(GetIntersectionSql(wkt));
+                DataTable dt = new DataTable();
+                DataColumn col;
+                int fCount = reader.FieldCount;
+                for (int i = 0; i < fCount; i++) {
+                    col = new DataColumn();
+                    col.ColumnName = reader.GetName(i);
+                    col.DataType = reader.GetFieldType(i);
+                    dt.Columns.Add(col);
                 }
+                DataRow row;
+                string fName;
+                while (reader.Read()) {
+                    if (count_pg <= 50) {
+                        row = dt.NewRow();
+                        for (int i = 0; i < fCount; i++) {
+                            fName = dt.Columns[i].ColumnName;
+                            row[fName] = reader[fName];
+                        }
+                        dt.Rows.Add(row);
+                    }
+                    count_pg++;
+                }
+                reader.Close();
+
                 sw.Stop();
                 long time_pg = sw.ElapsedMilliseconds;
                 AppendText("结果数", "", count_pg.ToString());
@@ -684,7 +753,8 @@ namespace PGDis {
                     af.Show();
                 }
             }
-            catch {
+            catch (Exception ex) {
+                Log(ex.Message + "-----" + ex.StackTrace);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -773,14 +843,41 @@ namespace PGDis {
                 //pg
                 SetProgress("PG查询，正在执行...", 80);
                 sw.Restart();
-                DataSet ds = Execute_PG(GetAllWhereSql(whereSql));
-                sw.Stop();
+                //DataSet ds = Execute_PG(GetAllWhereSql(whereSql));
+                //int count_pg = 0;
+                //DataTable dt = null;
+                //if (ds.Tables.Count > 0) {
+                //    dt = ds.Tables[0];
+                //    count_pg = dt.Rows.Count;
+                //}
+
                 int count_pg = 0;
-                DataTable dt = null;
-                if (ds.Tables.Count > 0) {
-                    dt = ds.Tables[0];
-                    count_pg = dt.Rows.Count;
+                NpgsqlDataReader reader = ExecuteReader_PG(GetAllWhereSql(whereSql));
+                DataTable dt = new DataTable();
+                DataColumn col;
+                int fCount = reader.FieldCount;
+                for (int i = 0; i < fCount; i++) {
+                    col = new DataColumn();
+                    col.ColumnName = reader.GetName(i);
+                    col.DataType = reader.GetFieldType(i);
+                    dt.Columns.Add(col);
                 }
+                DataRow row;
+                string fName;
+                while (reader.Read()) {
+                    if (dt.Rows.Count <= 50) {
+                        row = dt.NewRow();
+                        for (int i = 0; i < fCount; i++) {
+                            fName = dt.Columns[i].ColumnName;
+                            row[fName] = reader[fName];
+                        }
+                        dt.Rows.Add(row);
+                    }
+                    count_pg++;
+                }
+                reader.Close();
+
+                sw.Stop();
                 long time_pg = sw.ElapsedMilliseconds;
                 AppendText("结果数", "", count_pg.ToString());
                 AppendText("时间（秒）", "", (time_pg / 1000.0).ToString(".000"));
@@ -792,9 +889,44 @@ namespace PGDis {
                     af.Show();
                 }
             }
-            catch {
+            catch (Exception ex) {
+                Log(ex.Message + "-----" + ex.StackTrace);
                 MessageBox.Show("测试错误，请重试");
             }
         }
+
+
+        static void Log(string txt) {
+            if (!string.IsNullOrEmpty(LogPath)) {
+                Append(LogPath, txt + "\r\n");
+            }
+        }
+
+        public static void Append(string path, string text) {
+            try {
+                if (!File.Exists(path)) {
+                    Create(path);
+                }
+                if (text == null)
+                    return;
+                StreamWriter sw = File.AppendText(path);
+                sw.Write(text);
+                sw.Close();
+            }
+            catch {
+                throw;
+            }
+        }
+
+        public static void Create(string path) {
+            try {
+                System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.ReadWrite);
+                fs.Close();
+            }
+            catch {
+                throw;
+            }
+        }
+
     }
 }
