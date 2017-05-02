@@ -42,9 +42,12 @@ namespace PGDis {
         static readonly string DB = ConfigurationManager.AppSettings["PgDb"];
         static readonly string TABLENAME = ConfigurationManager.AppSettings["PgTableName"];
 
-        //server
-        static readonly string ServerLayerUrl = ConfigurationManager.AppSettings["ServerLayerUrl"];
-        static readonly string ServerLayerName = ConfigurationManager.AppSettings["ServerName"];
+        //arcgis server
+        static readonly string AGSServerLayerUrl = ConfigurationManager.AppSettings["AGSServerLayerUrl"];
+        static readonly string AGSServerLayerName = ConfigurationManager.AppSettings["ServerName"];
+
+        //Wmts server
+        static readonly string WmtsServerLayerUrl = ConfigurationManager.AppSettings["WmtsServerLayerUrl"];
 
         //Log Path
         static readonly string LogPath = ConfigurationManager.AppSettings["LogPath"];
@@ -59,13 +62,20 @@ namespace PGDis {
         const string POLYGONNAME = "Polygon";
         const string POLYLINENAME = "Polyline";
 
-        IFeatureLayer Fl_DrawPolygon;
-        IFeatureLayer Fl_DrawPolyline;
-        IWorkspaceEdit Wse_Draw;
+        //IFeatureLayer Fl_DrawPolygon;
+        //IFeatureLayer Fl_DrawPolyline;
+        //IWorkspaceEdit Wse_Draw;
         esriControlsMousePointer Default_Pointer;
 
         IWorkspaceFactory GDBWorkspaceFactory = new FileGDBWorkspaceFactoryClass();
-        DrawMode drawMode;
+        //DrawMode drawMode;
+
+        NpgsqlConnection conn;
+        private void ConnectionPg() {
+            conn = new NpgsqlConnection(connString);
+            conn.Open();
+        }
+
         private enum DrawMode {
             Polygon = 0,
             Polyline = 1
@@ -73,11 +83,20 @@ namespace PGDis {
 
         public Form1() {
             InitializeComponent();
-            //server
-            if (!string.IsNullOrEmpty(ServerLayerUrl) && !string.IsNullOrEmpty(ServerLayerName)) {
+            ConnectionPg();
+
+            //arcgis server
+            if (!string.IsNullOrEmpty(AGSServerLayerUrl) && !string.IsNullOrEmpty(AGSServerLayerName)) {
                 OpenServer os = new OpenServer();
-                ILayer layer = os.GetServerLyr(ServerLayerUrl, ServerLayerName, false);
+                ILayer layer = os.GetARGServerLyr(AGSServerLayerUrl, AGSServerLayerName, false);
                 axMapControl.AddLayer(layer);
+            }
+            //wmts server
+            if (!string.IsNullOrEmpty(WmtsServerLayerUrl)) {
+                OpenServer os = new OpenServer();
+                IWMTSLayer layer = os.GetWMTSServerLyr(WmtsServerLayerUrl);
+                ILayer ll = layer as ILayer;
+                axMapControl.AddLayer(ll);
             }
             //myUS
             if (!string.IsNullOrEmpty(MyDefineGdbPath) && !string.IsNullOrEmpty(MyDefineGdbFcName)) {
@@ -86,23 +105,26 @@ namespace PGDis {
                 fl_us.FeatureClass = us;
                 axMapControl.AddLayer(fl_us);
             }
-            //default draw polygon polyline gdb file
-            IWorkspace ws = GDBWorkspaceFactory.OpenFromFile(DEFAULT_GDBPATH, 0);
-            Wse_Draw = ws as IWorkspaceEdit;
 
-            IFeatureClass Fc_DrawPolygon = (ws as IFeatureWorkspace).OpenFeatureClass(DEFAULT_DRAWPOLYGONNAME);
-            Fl_DrawPolygon = new FeatureLayerClass();
-            Fl_DrawPolygon.FeatureClass = Fc_DrawPolygon;
-            axMapControl.AddLayer(Fl_DrawPolygon);
+            #region old draw polygon and polyline
+            ////default draw polygon polyline gdb file
+            //IWorkspace ws = GDBWorkspaceFactory.OpenFromFile(DEFAULT_GDBPATH, 0);
+            //Wse_Draw = ws as IWorkspaceEdit;
 
-            IFeatureClass Fc_DrawPolyline = (ws as IFeatureWorkspace).OpenFeatureClass(DEFAULT_DRAWPOLYLINENAME);
-            Fl_DrawPolyline = new FeatureLayerClass();
-            Fl_DrawPolyline.FeatureClass = Fc_DrawPolyline;
-            axMapControl.AddLayer(Fl_DrawPolyline);
-            //default mouse pointer
-            Default_Pointer = esriControlsMousePointer.esriPointerDefault;
-            axMapControl.MousePointer = Default_Pointer;
-            axMapControl.MouseIcon = Properties.Resources.EditingEditTool;
+            //IFeatureClass Fc_DrawPolygon = (ws as IFeatureWorkspace).OpenFeatureClass(DEFAULT_DRAWPOLYGONNAME);
+            //Fl_DrawPolygon = new FeatureLayerClass();
+            //Fl_DrawPolygon.FeatureClass = Fc_DrawPolygon;
+            //axMapControl.AddLayer(Fl_DrawPolygon);
+
+            //IFeatureClass Fc_DrawPolyline = (ws as IFeatureWorkspace).OpenFeatureClass(DEFAULT_DRAWPOLYLINENAME);
+            //Fl_DrawPolyline = new FeatureLayerClass();
+            //Fl_DrawPolyline.FeatureClass = Fc_DrawPolyline;
+            //axMapControl.AddLayer(Fl_DrawPolyline);
+            ////default mouse pointer
+            //Default_Pointer = esriControlsMousePointer.esriPointerDefault;
+            //axMapControl.MousePointer = Default_Pointer;
+            //axMapControl.MouseIcon = Properties.Resources.EditingEditTool;
+            #endregion
         }
 
         private void axMapControl_OnMouseDown(object sender, ESRI.ArcGIS.Controls.IMapControlEvents2_OnMouseDownEvent e) {
@@ -112,17 +134,17 @@ namespace PGDis {
         }
 
         private void SetAxMapControlMousePointer(int btn) {
-            if (btn == 1) {
-                if (!Wse_Draw.IsBeingEdited()) {
-                    axMapControl.MousePointer = esriControlsMousePointer.esriPointerCustom;
-                }
-            }
-            else if (btn == 4) {
-                axMapControl.MousePointer = esriControlsMousePointer.esriPointerPan;
-            }
-            else {
-                axMapControl.MousePointer = Default_Pointer;
-            }
+            //if (btn == 1) {
+            //    if (!Wse_Draw.IsBeingEdited()) {
+            //        axMapControl.MousePointer = esriControlsMousePointer.esriPointerCustom;
+            //    }
+            //}
+            //else if (btn == 4) {
+            //    axMapControl.MousePointer = esriControlsMousePointer.esriPointerPan;
+            //}
+            //else {
+            //    axMapControl.MousePointer = Default_Pointer;
+            //}
         }
 
         private void Perform(double x, double y) {
@@ -186,61 +208,61 @@ namespace PGDis {
         }
 
         private void btnEdit_Click(object sender, EventArgs e) {
-            if (Wse_Draw.IsBeingEdited()) {
-                Wse_Draw.StopEditOperation();
-                Wse_Draw.StopEditing(true);
-                btnEdit.Text = "开始编辑";
-                btnDrawPolygon.Enabled = false;
-                btnDrawPolyline.Enabled = false;
-                delF.Enabled = false;
-                Default_Pointer = esriControlsMousePointer.esriPointerDefault;
-                axMapControl.MousePointer = esriControlsMousePointer.esriPointerDefault;
-                axMapControl.Map.ClearSelection();
-            }
-            else {
-                Wse_Draw.StartEditing(false);
-                Wse_Draw.StartEditOperation();
-                btnEdit.Text = "结束编辑";
-                btnDrawPolygon.Enabled = true;
-                btnDrawPolyline.Enabled = true;
-                delF.Enabled = true;
-                Default_Pointer = esriControlsMousePointer.esriPointerCustom;
-                axMapControl.MousePointer = esriControlsMousePointer.esriPointerCustom;
-            }
+            //if (Wse_Draw.IsBeingEdited()) {
+            //    Wse_Draw.StopEditOperation();
+            //    Wse_Draw.StopEditing(true);
+            //    btnEdit.Text = "开始编辑";
+            //    btnDrawPolygon.Enabled = false;
+            //    btnDrawPolyline.Enabled = false;
+            //    delF.Enabled = false;
+            //    Default_Pointer = esriControlsMousePointer.esriPointerDefault;
+            //    axMapControl.MousePointer = esriControlsMousePointer.esriPointerDefault;
+            //    axMapControl.Map.ClearSelection();
+            //}
+            //else {
+            //    Wse_Draw.StartEditing(false);
+            //    Wse_Draw.StartEditOperation();
+            //    btnEdit.Text = "结束编辑";
+            //    btnDrawPolygon.Enabled = true;
+            //    btnDrawPolyline.Enabled = true;
+            //    delF.Enabled = true;
+            //    Default_Pointer = esriControlsMousePointer.esriPointerCustom;
+            //    axMapControl.MousePointer = esriControlsMousePointer.esriPointerCustom;
+            //}
         }
 
         private void btnSelect_Click(object sender, EventArgs e) {
-            if (Wse_Draw.IsBeingEdited()) {
-                btnDrawPolygon.Enabled = true;
-                btnDrawPolyline.Enabled = true;
-            }
-            Default_Pointer = esriControlsMousePointer.esriPointerCustom;
-            axMapControl.MousePointer = esriControlsMousePointer.esriPointerCustom;
+            //if (Wse_Draw.IsBeingEdited()) {
+            //    btnDrawPolygon.Enabled = true;
+            //    btnDrawPolyline.Enabled = true;
+            //}
+            //Default_Pointer = esriControlsMousePointer.esriPointerCustom;
+            //axMapControl.MousePointer = esriControlsMousePointer.esriPointerCustom;
         }
 
         private void btnDrawPolygon_Click(object sender, EventArgs e) {
-            btnDrawPolygon.Enabled = false;
-            btnDrawPolyline.Enabled = true;
-            Default_Pointer = esriControlsMousePointer.esriPointerPencil;
-            axMapControl.MousePointer = esriControlsMousePointer.esriPointerPencil;
-            drawMode = DrawMode.Polygon;
+            //btnDrawPolygon.Enabled = false;
+            //btnDrawPolyline.Enabled = true;
+            //Default_Pointer = esriControlsMousePointer.esriPointerPencil;
+            //axMapControl.MousePointer = esriControlsMousePointer.esriPointerPencil;
+            //drawMode = DrawMode.Polygon;
         }
 
         private void btnDrawPolyline_Click(object sender, EventArgs e) {
-            btnDrawPolygon.Enabled = true;
-            btnDrawPolyline.Enabled = false;
-            Default_Pointer = esriControlsMousePointer.esriPointerPencil;
-            axMapControl.MousePointer = esriControlsMousePointer.esriPointerPencil;
-            drawMode = DrawMode.Polyline;
+            //btnDrawPolygon.Enabled = true;
+            //btnDrawPolyline.Enabled = false;
+            //Default_Pointer = esriControlsMousePointer.esriPointerPencil;
+            //axMapControl.MousePointer = esriControlsMousePointer.esriPointerPencil;
+            //drawMode = DrawMode.Polyline;
         }
 
         private void delF_Click(object sender, EventArgs e) {
-            IFeature fea = GetSelectedFeature();
-            if (fea != null) {
-                fea.Delete();
-            }
+            //IFeature fea = GetSelectedFeature();
+            //if (fea != null) {
+            //    fea.Delete();
+            //}
 
-            axMapControl.Refresh();
+            //axMapControl.Refresh();
         }
 
         private IFeature GetSelectedFeature() {
@@ -283,11 +305,27 @@ namespace PGDis {
             return ds;
         }
 
+        private DataSet Execute_PgWithoutConn(string sql) {
+            DataSet ds = new DataSet();
+            using (NpgsqlCommand cmd = new NpgsqlCommand(sql, conn)) {
+                using (NpgsqlDataAdapter da = new NpgsqlDataAdapter(cmd)) {
+                    da.Fill(ds);
+                }
+            }
+            return ds;
+        }
+
         private NpgsqlDataReader ExecuteReader_PG(string sql) {
             NpgsqlConnection conn = new NpgsqlConnection(connString);
             conn.Open();
             NpgsqlCommand cmd = new NpgsqlCommand(sql, conn);
             NpgsqlDataReader reader = cmd.ExecuteReader(CommandBehavior.CloseConnection);
+            return reader;
+        }
+
+        private NpgsqlDataReader ExecuteReader_PgWithoutConn(string sql) {
+            NpgsqlCommand cmd = new NpgsqlCommand(sql, conn);
+            NpgsqlDataReader reader = cmd.ExecuteReader();
             return reader;
         }
 
@@ -300,6 +338,110 @@ namespace PGDis {
         }
 
         private void btnIntersect_Click(object sender, EventArgs e) {
+
+        }
+
+        private void Intersect() {
+            try {
+                dgv.Rows.Clear();
+                IFeature fea = GetSelectedFeature();
+                if (fea == null) {
+                    MessageBox.Show("未选中任何要素");
+                    return;
+                }
+                AddDgvSplitFlag();
+                SetProgress("开始执行空间相交...", 10);
+                AddDgvRow("空间相交", "", "");
+
+                ISpatialFilter spatialFilter = SetSpatialFilter(fea);
+                IGeometry geo = fea.Shape;
+                string wkt = geo.ToWellKnownText();
+                string sType = "";
+                string sArcgis = "";
+                string sPG = "";
+                if (geo.GeometryType == esriGeometryType.esriGeometryPolygon) {
+                    IArea area = geo as IArea;
+                    if (area != null) {
+                        double b = Math.Abs(area.Area);
+                        sType = "相交要素面积";
+                        sArcgis = sPG = b.ToString();
+                    }
+                }
+                else if (geo.GeometryType == esriGeometryType.esriGeometryPolyline) {
+                    IPolyline line = geo as IPolyline;
+                    if (line != null) {
+                        double b = line.Length;
+                        sType = "相交要素长度";
+                        sArcgis = sPG = b.ToString();
+                    }
+                }
+                if (!string.IsNullOrEmpty(sType) && !string.IsNullOrEmpty(sArcgis) && !string.IsNullOrEmpty(sPG)) {
+                    AddDgvRow(sType, sArcgis, sPG);
+                }
+                AddDgvRow("相交结果数", "", "");
+                AddDgvRow("时间（秒）", "", "");
+
+                IFeatureClass fc = OpenGdbFeatureClass(EDGES_GdbPath, EDGES_FeatureClassName);
+
+                Stopwatch sw = new Stopwatch();
+                sw.Restart();
+                //arcgis 
+                SetProgress("ArcGIS空间相交，正在执行...", 40);
+                int intersectCount_arcgis = SearchCount_ArcGIS(fc, spatialFilter);
+
+                sw.Stop();
+                long time_arcgis = sw.ElapsedMilliseconds;
+
+                SetProgress("PG空间相交，正在执行...", 80);
+                AppendText("相交结果数", intersectCount_arcgis.ToString(), null);
+                AppendText("时间（秒）", (time_arcgis / 1000.0).ToString(".000"), null);
+                sw.Restart();
+
+                int intersectCount_pg = 0;
+                NpgsqlDataReader reader = ExecuteReader_PG(GetIntersectSql(wkt));
+                DataTable dt = new DataTable();
+                DataColumn col;
+                int fCount = reader.FieldCount;
+                for (int i = 0; i < fCount; i++) {
+                    col = new DataColumn();
+                    col.ColumnName = reader.GetName(i);
+                    col.DataType = reader.GetFieldType(i);
+                    dt.Columns.Add(col);
+                }
+                DataRow row;
+                string fName;
+                while (reader.Read()) {
+                    if (intersectCount_pg <= 50) {
+                        row = dt.NewRow();
+                        for (int i = 0; i < fCount; i++) {
+                            fName = dt.Columns[i].ColumnName;
+                            row[fName] = reader[fName];
+                        }
+                        dt.Rows.Add(row);
+                    }
+                    intersectCount_pg++;
+                }
+                reader.Close();
+
+                sw.Stop();
+                long time_pg = sw.ElapsedMilliseconds;
+                AppendText("相交结果数", null, intersectCount_pg.ToString());
+                AppendText("时间（秒）", null, (time_pg / 1000.0).ToString(".000"));
+
+                SetProgress("空间相交执行完成", 100);
+                AddDgvSplitFlag();
+                if (dt != null) {
+                    AttributeForm af = new AttributeForm(dt);
+                    af.Show();
+                }
+            }
+            catch (Exception ex) {
+                Log(ex.Message + "-----" + ex.StackTrace);
+                MessageBox.Show("测试错误，请重试");
+            }
+        }
+
+        private void Intersect_old() {
             try {
                 dgv.Rows.Clear();
                 IFeature fea = GetSelectedFeature();
@@ -788,7 +930,6 @@ namespace PGDis {
         }
 
         private void btnRefresh_Click(object sender, EventArgs e) {
-
             axMapControl.Refresh();
         }
 

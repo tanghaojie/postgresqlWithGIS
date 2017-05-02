@@ -26,7 +26,7 @@ namespace PGDis
         /// <param name="mapservername"></param>地图服务名称
         /// <param name="isLan"></param>地图服务是局域网内还是互联网上的
         /// <returns></returns>
-        public ILayer GetServerLyr(String serverUrl, String mapservername, bool isLan)
+        public ILayer GetARGServerLyr(String serverUrl, String mapservername, bool isLan)
         {
             ILayer lyr = null;
             //获得服务对象名称
@@ -91,8 +91,7 @@ namespace PGDis
             return ServerObjectName;//返回服务标识
         }
 
-
-        public ILayer GetWmsMapServer(string url, string serviceName)
+        public ILayer GetWmsMapServerLyr(string url, string serviceName)
         {
             IPropertySet pPropertyset = new PropertySetClass();
             pPropertyset.SetProperty("url", url);
@@ -137,6 +136,18 @@ namespace PGDis
             pLayer.Name = pWmsServiceDesc.WMSTitle;
             pLayer.Visible = true;
             return pLayer;
+        }
+
+        public IWMTSLayer GetWMTSServerLyr(string url) {
+            IPropertySet pPropertyset = new PropertySet();
+            pPropertyset.SetProperty("url", url);
+            IWMTSConnectionFactory pwmtsconnectionfactory = new WMTSConnectionFactory();
+            IWMTSConnection con = pwmtsconnectionfactory.Open(pPropertyset, 0, null);
+            IWMTSLayer ly = new WMTSLayer();
+            IName n = con.FullName;
+            ly.Connect(n);
+
+            return ly;
         }
 
 

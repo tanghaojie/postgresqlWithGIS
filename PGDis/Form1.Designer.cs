@@ -38,11 +38,11 @@
             this.btnDrawPolyline = new System.Windows.Forms.Button();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.btnQuery = new System.Windows.Forms.Button();
             this.btnOnlyClip = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
+            this.btnRefresh = new System.Windows.Forms.Button();
             this.btnClip = new System.Windows.Forms.Button();
             this.btnIntersect = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
             this.dgv = new System.Windows.Forms.DataGridView();
             this.C = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.CARCGIS = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -52,8 +52,6 @@
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
-            this.btnRefresh = new System.Windows.Forms.Button();
-            this.btnQuery = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.axLicenseControl1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.axMapControl)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -94,54 +92,59 @@
             // 
             // btnEdit
             // 
-            this.btnEdit.Location = new System.Drawing.Point(3, 9);
+            this.btnEdit.Location = new System.Drawing.Point(3, 344);
             this.btnEdit.Name = "btnEdit";
             this.btnEdit.Size = new System.Drawing.Size(75, 23);
             this.btnEdit.TabIndex = 2;
             this.btnEdit.Text = "开始编辑";
             this.btnEdit.UseVisualStyleBackColor = true;
+            this.btnEdit.Visible = false;
             this.btnEdit.Click += new System.EventHandler(this.btnEdit_Click);
             // 
             // btnDrawPolygon
             // 
             this.btnDrawPolygon.Enabled = false;
-            this.btnDrawPolygon.Location = new System.Drawing.Point(3, 38);
+            this.btnDrawPolygon.Location = new System.Drawing.Point(3, 366);
             this.btnDrawPolygon.Name = "btnDrawPolygon";
             this.btnDrawPolygon.Size = new System.Drawing.Size(75, 23);
             this.btnDrawPolygon.TabIndex = 3;
             this.btnDrawPolygon.Text = "面";
             this.btnDrawPolygon.UseVisualStyleBackColor = true;
+            this.btnDrawPolygon.Visible = false;
             this.btnDrawPolygon.Click += new System.EventHandler(this.btnDrawPolygon_Click);
             // 
             // btnSelect
             // 
-            this.btnSelect.Location = new System.Drawing.Point(3, 125);
+            this.btnSelect.Location = new System.Drawing.Point(3, 410);
             this.btnSelect.Name = "btnSelect";
             this.btnSelect.Size = new System.Drawing.Size(75, 23);
             this.btnSelect.TabIndex = 4;
             this.btnSelect.Text = "选择";
             this.btnSelect.UseVisualStyleBackColor = true;
+            this.btnSelect.Visible = false;
             this.btnSelect.Click += new System.EventHandler(this.btnSelect_Click);
             // 
             // delF
             // 
-            this.delF.Location = new System.Drawing.Point(3, 154);
+            this.delF.Location = new System.Drawing.Point(3, 432);
             this.delF.Name = "delF";
             this.delF.Size = new System.Drawing.Size(75, 23);
             this.delF.TabIndex = 6;
             this.delF.Text = "删除";
             this.delF.UseVisualStyleBackColor = true;
+            this.delF.Visible = false;
             this.delF.Click += new System.EventHandler(this.delF_Click);
             // 
             // btnDrawPolyline
             // 
             this.btnDrawPolyline.Enabled = false;
-            this.btnDrawPolyline.Location = new System.Drawing.Point(3, 67);
+            this.btnDrawPolyline.Location = new System.Drawing.Point(3, 388);
             this.btnDrawPolyline.Name = "btnDrawPolyline";
             this.btnDrawPolyline.Size = new System.Drawing.Size(75, 23);
             this.btnDrawPolyline.TabIndex = 7;
             this.btnDrawPolyline.Text = "线";
             this.btnDrawPolyline.UseVisualStyleBackColor = true;
+            this.btnDrawPolyline.Visible = false;
             this.btnDrawPolyline.Click += new System.EventHandler(this.btnDrawPolyline_Click);
             // 
             // splitContainer1
@@ -174,14 +177,12 @@
             this.splitContainer2.Panel1.Controls.Add(this.btnQuery);
             this.splitContainer2.Panel1.Controls.Add(this.btnOnlyClip);
             this.splitContainer2.Panel1.Controls.Add(this.btnRefresh);
-            this.splitContainer2.Panel1.Controls.Add(this.label2);
             this.splitContainer2.Panel1.Controls.Add(this.btnClip);
             this.splitContainer2.Panel1.Controls.Add(this.btnEdit);
             this.splitContainer2.Panel1.Controls.Add(this.btnDrawPolyline);
             this.splitContainer2.Panel1.Controls.Add(this.btnIntersect);
             this.splitContainer2.Panel1.Controls.Add(this.delF);
             this.splitContainer2.Panel1.Controls.Add(this.btnDrawPolygon);
-            this.splitContainer2.Panel1.Controls.Add(this.label1);
             this.splitContainer2.Panel1.Controls.Add(this.btnSelect);
             // 
             // splitContainer2.Panel2
@@ -191,9 +192,19 @@
             this.splitContainer2.SplitterDistance = 84;
             this.splitContainer2.TabIndex = 0;
             // 
+            // btnQuery
+            // 
+            this.btnQuery.Location = new System.Drawing.Point(3, 141);
+            this.btnQuery.Name = "btnQuery";
+            this.btnQuery.Size = new System.Drawing.Size(75, 23);
+            this.btnQuery.TabIndex = 14;
+            this.btnQuery.Text = "查询";
+            this.btnQuery.UseVisualStyleBackColor = true;
+            this.btnQuery.Click += new System.EventHandler(this.btnQuery_Click);
+            // 
             // btnOnlyClip
             // 
-            this.btnOnlyClip.Location = new System.Drawing.Point(3, 314);
+            this.btnOnlyClip.Location = new System.Drawing.Point(3, 55);
             this.btnOnlyClip.Name = "btnOnlyClip";
             this.btnOnlyClip.Size = new System.Drawing.Size(75, 23);
             this.btnOnlyClip.TabIndex = 13;
@@ -201,17 +212,20 @@
             this.btnOnlyClip.UseVisualStyleBackColor = true;
             this.btnOnlyClip.Click += new System.EventHandler(this.btnOnlyClip_Click);
             // 
-            // label2
+            // btnRefresh
             // 
-            this.label2.Location = new System.Drawing.Point(3, 282);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(75, 29);
-            this.label2.TabIndex = 11;
-            this.label2.Text = "选中要素作为裁剪要素";
+            this.btnRefresh.Location = new System.Drawing.Point(3, 454);
+            this.btnRefresh.Name = "btnRefresh";
+            this.btnRefresh.Size = new System.Drawing.Size(75, 23);
+            this.btnRefresh.TabIndex = 12;
+            this.btnRefresh.Text = "刷新";
+            this.btnRefresh.UseVisualStyleBackColor = true;
+            this.btnRefresh.Visible = false;
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             // 
             // btnClip
             // 
-            this.btnClip.Location = new System.Drawing.Point(3, 343);
+            this.btnClip.Location = new System.Drawing.Point(3, 98);
             this.btnClip.Name = "btnClip";
             this.btnClip.Size = new System.Drawing.Size(75, 23);
             this.btnClip.TabIndex = 10;
@@ -221,21 +235,13 @@
             // 
             // btnIntersect
             // 
-            this.btnIntersect.Location = new System.Drawing.Point(3, 229);
+            this.btnIntersect.Location = new System.Drawing.Point(3, 12);
             this.btnIntersect.Name = "btnIntersect";
             this.btnIntersect.Size = new System.Drawing.Size(75, 23);
             this.btnIntersect.TabIndex = 8;
             this.btnIntersect.Text = "空间相交";
             this.btnIntersect.UseVisualStyleBackColor = true;
             this.btnIntersect.Click += new System.EventHandler(this.btnIntersect_Click);
-            // 
-            // label1
-            // 
-            this.label1.Location = new System.Drawing.Point(3, 202);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(75, 29);
-            this.label1.TabIndex = 9;
-            this.label1.Text = "与选中的要素相交";
             // 
             // dgv
             // 
@@ -329,26 +335,6 @@
             this.splitContainer3.SplitterWidth = 1;
             this.splitContainer3.TabIndex = 12;
             // 
-            // btnRefresh
-            // 
-            this.btnRefresh.Location = new System.Drawing.Point(3, 517);
-            this.btnRefresh.Name = "btnRefresh";
-            this.btnRefresh.Size = new System.Drawing.Size(75, 23);
-            this.btnRefresh.TabIndex = 12;
-            this.btnRefresh.Text = "刷新";
-            this.btnRefresh.UseVisualStyleBackColor = true;
-            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
-            // 
-            // btnQuery
-            // 
-            this.btnQuery.Location = new System.Drawing.Point(3, 405);
-            this.btnQuery.Name = "btnQuery";
-            this.btnQuery.Size = new System.Drawing.Size(75, 23);
-            this.btnQuery.TabIndex = 14;
-            this.btnQuery.Text = "查询";
-            this.btnQuery.UseVisualStyleBackColor = true;
-            this.btnQuery.Click += new System.EventHandler(this.btnQuery_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -391,11 +377,9 @@
         private System.Windows.Forms.Button btnDrawPolyline;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.Button btnIntersect;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnClip;
         private System.Windows.Forms.SplitContainer splitContainer2;
         private System.Windows.Forms.DataGridView dgv;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.DataGridViewTextBoxColumn C;
         private System.Windows.Forms.DataGridViewTextBoxColumn CARCGIS;
         private System.Windows.Forms.DataGridViewTextBoxColumn CPG;
