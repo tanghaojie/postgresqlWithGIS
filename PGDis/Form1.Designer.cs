@@ -45,8 +45,8 @@
             this.btnIntersect = new System.Windows.Forms.Button();
             this.dgv = new System.Windows.Forms.DataGridView();
             this.C = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.CARCGIS = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.CPG = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.CARCGIS = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -225,7 +225,7 @@
             // 
             // btnClip
             // 
-            this.btnClip.Location = new System.Drawing.Point(3, 98);
+            this.btnClip.Location = new System.Drawing.Point(3, 99);
             this.btnClip.Name = "btnClip";
             this.btnClip.Size = new System.Drawing.Size(75, 23);
             this.btnClip.TabIndex = 10;
@@ -251,8 +251,8 @@
             this.dgv.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgv.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.C,
-            this.CARCGIS,
-            this.CPG});
+            this.CPG,
+            this.CARCGIS});
             this.dgv.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgv.Location = new System.Drawing.Point(0, 0);
             this.dgv.Name = "dgv";
@@ -262,6 +262,7 @@
             this.dgv.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             this.dgv.Size = new System.Drawing.Size(341, 553);
             this.dgv.TabIndex = 0;
+            this.dgv.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_CellClick);
             // 
             // C
             // 
@@ -270,19 +271,19 @@
             this.C.ReadOnly = true;
             this.C.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
-            // CARCGIS
-            // 
-            this.CARCGIS.HeaderText = "ArcGIS";
-            this.CARCGIS.Name = "CARCGIS";
-            this.CARCGIS.ReadOnly = true;
-            this.CARCGIS.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
             // CPG
             // 
             this.CPG.HeaderText = "PG";
             this.CPG.Name = "CPG";
             this.CPG.ReadOnly = true;
             this.CPG.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // CARCGIS
+            // 
+            this.CARCGIS.HeaderText = "ArcGIS";
+            this.CARCGIS.Name = "CARCGIS";
+            this.CARCGIS.ReadOnly = true;
+            this.CARCGIS.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
             // statusStrip1
             // 
@@ -380,9 +381,6 @@
         private System.Windows.Forms.Button btnClip;
         private System.Windows.Forms.SplitContainer splitContainer2;
         private System.Windows.Forms.DataGridView dgv;
-        private System.Windows.Forms.DataGridViewTextBoxColumn C;
-        private System.Windows.Forms.DataGridViewTextBoxColumn CARCGIS;
-        private System.Windows.Forms.DataGridViewTextBoxColumn CPG;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.SplitContainer splitContainer3;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
@@ -391,6 +389,9 @@
         private System.Windows.Forms.Button btnOnlyClip;
         private System.Windows.Forms.Button btnRefresh;
         private System.Windows.Forms.Button btnQuery;
+        private System.Windows.Forms.DataGridViewTextBoxColumn C;
+        private System.Windows.Forms.DataGridViewTextBoxColumn CPG;
+        private System.Windows.Forms.DataGridViewTextBoxColumn CARCGIS;
     }
 }
 
