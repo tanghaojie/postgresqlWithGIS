@@ -182,12 +182,12 @@ namespace PGDis {
 
         private void SetDgvColumns() {
             dgv.Columns.Clear();
-            dgv.Columns.Add(DgvColumn1Name, DgvColumn1Name);
-            dgv.Columns.Add(DgvColumn2Name, DgvColumn2Name);
+            dgv.Columns[dgv.Columns.Add(DgvColumn1Name, DgvColumn1Name)].SortMode = DataGridViewColumnSortMode.NotSortable;
+            dgv.Columns[dgv.Columns.Add(DgvColumn2Name, DgvColumn2Name)].SortMode = DataGridViewColumnSortMode.NotSortable;
             if (!string.IsNullOrEmpty(DgvColumn3Name)) {
-                dgv.Columns.Add(DgvColumn3Name, DgvColumn3Name);
+                dgv.Columns[dgv.Columns.Add(DgvColumn3Name, DgvColumn3Name)].SortMode = DataGridViewColumnSortMode.NotSortable;
             }
-            dgv.Columns.Add(DgvColumn4Name, DgvColumn4Name);
+            dgv.Columns[dgv.Columns.Add(DgvColumn4Name, DgvColumn4Name)].SortMode = DataGridViewColumnSortMode.NotSortable;
         }
 
         private void axMapControl_OnMouseDown(object sender, ESRI.ArcGIS.Controls.IMapControlEvents2_OnMouseDownEvent e) {
@@ -201,6 +201,10 @@ namespace PGDis {
             else if (axMapControl.MousePointer == esriControlsMousePointer.esriPointerPencil) {
                 axMapControl.Tag = null;
                 IGeometry geo = TrackPolygon();
+                if (geo == null) {
+                    dgv.Rows.Clear();
+                    return;
+                }
                 IPolygonElement polygonElement = new PolygonElementClass();
                 IElement element = polygonElement as IElement;
                 element.Geometry = geo;
@@ -1003,7 +1007,7 @@ namespace PGDis {
                 btnQuery.Tag = whereSql;
 
                 AddDgvSplitFlag();
-                AddDgvRow(QueryName, "", "", "");
+                AddDgvRow(QueryName, txt, txt, txt);
                 AddDgvRow(QuerySum, "", "", "");
                 AddDgvRow(QueryTime, "", "", "");
                 AddDgvRowButton();
@@ -1142,6 +1146,9 @@ namespace PGDis {
         }
 
         private void dgv_CellClick(object sender, DataGridViewCellEventArgs e) {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) {
+                return;
+            }
             DataGridViewCell cell = dgv.Rows[e.RowIndex].Cells[e.ColumnIndex];
             if (!(cell is DataGridViewButtonCell)) {
                 return;
@@ -1218,14 +1225,16 @@ namespace PGDis {
                     IArea area = geo as IArea;
                     if (area != null) {
                         double b = Math.Abs(area.Area);
-                        AppendDgvText(IntersectArea, b.ToString(), null, null);
+                        double meterArea = GeographicCoordinateSystemUnitToMeter_Area(b, geo.SpatialReference as IGeographicCoordinateSystem);
+                        AppendDgvText(IntersectArea, (meterArea / 1000000.0).ToString(), null, null);
                     }
                 }
                 else if (geo.GeometryType == esriGeometryType.esriGeometryPolyline) {
                     IPolyline line = geo as IPolyline;
                     if (line != null) {
                         double b = Math.Abs(line.Length);
-                        AppendDgvText(IntersectArea, b.ToString(), null, null);
+                        double meterLength = GeographicCoordinateSystemUnitToMeter_Length(b, geo.SpatialReference as IGeographicCoordinateSystem);
+                        AppendDgvText(IntersectArea, (meterLength / 1000.0).ToString(), null, null);
                     }
                 }
                 string wkt = geo.ToWellKnownText();
@@ -1286,7 +1295,8 @@ namespace PGDis {
                     IArea area = geo as IArea;
                     if (area != null) {
                         double b = Math.Abs(area.Area);
-                        AppendDgvText(IntersectArea, null, b.ToString(), null);
+                        double meterArea = GeographicCoordinateSystemUnitToMeter_Area(b, geo.SpatialReference as IGeographicCoordinateSystem);
+                        AppendDgvText(IntersectArea, null, (meterArea / 1000000.0).ToString(), null);
                     }
                 }
                 else if (geo.GeometryType == esriGeometryType.esriGeometryPolyline) {
@@ -1351,7 +1361,8 @@ namespace PGDis {
                     IArea area = geo as IArea;
                     if (area != null) {
                         double b = Math.Abs(area.Area);
-                        AppendDgvText(IntersectArea, null, null, b.ToString());
+                        double meterArea = GeographicCoordinateSystemUnitToMeter_Area(b, geo.SpatialReference as IGeographicCoordinateSystem);
+                        AppendDgvText(IntersectArea, null, null, (meterArea / 1000000.0).ToString());
                     }
                 }
                 else if (geo.GeometryType == esriGeometryType.esriGeometryPolyline) {
@@ -1403,7 +1414,8 @@ namespace PGDis {
                 IArea area = geo as IArea;
                 if (area != null) {
                     double b = Math.Abs(area.Area);
-                    AppendDgvText(IntersectionArea, b.ToString(), null, null);
+                    double meterArea = GeographicCoordinateSystemUnitToMeter_Area(b, geo.SpatialReference as IGeographicCoordinateSystem);
+                    AppendDgvText(IntersectionArea, (meterArea / 1000000.0).ToString(), null, null);
                 }
                 SetProgress("正在裁剪...", 60);
                 int count_pg = 0;
@@ -1468,7 +1480,8 @@ namespace PGDis {
                 IArea area = geo as IArea;
                 if (area != null) {
                     double b = Math.Abs(area.Area);
-                    AppendDgvText(IntersectionArea, null, b.ToString(), null);
+                    double meterArea = GeographicCoordinateSystemUnitToMeter_Area(b, geo.SpatialReference as IGeographicCoordinateSystem);
+                    AppendDgvText(IntersectionArea, null, (meterArea / 1000000.0).ToString(), null);
                 }
                 SetProgress("正在裁剪...", 60);
                 int count_pg = 0;
@@ -1528,7 +1541,8 @@ namespace PGDis {
                 IArea area = geo as IArea;
                 if (area != null) {
                     double b = Math.Abs(area.Area);
-                    AppendDgvText(IntersectionArea, null, null, b.ToString());
+                    double meterArea = GeographicCoordinateSystemUnitToMeter_Area(b, geo.SpatialReference as IGeographicCoordinateSystem);
+                    AppendDgvText(IntersectionArea, null, null, (meterArea / 1000000.0).ToString());
                 }
                 SetProgress("正在裁剪...", 60);
 
@@ -1581,7 +1595,8 @@ namespace PGDis {
                 IArea area = geo as IArea;
                 if (area != null) {
                     double b = Math.Abs(area.Area);
-                    AppendDgvText(IntersectionAndStatisticArea, b.ToString(), null, null);
+                    double meterArea = GeographicCoordinateSystemUnitToMeter_Area(b, geo.SpatialReference as IGeographicCoordinateSystem);
+                    AppendDgvText(IntersectionAndStatisticArea, (meterArea / 1000000.0).ToString(), null, null);
                 }
                 SetProgress("正在裁剪...", 60);
 
@@ -1602,7 +1617,8 @@ namespace PGDis {
                 long time_pg = sw.ElapsedMilliseconds;
                 AppendDgvText(IntersectionAndStatisticSum, count_pg.ToString(), null, null);
                 AppendDgvText(IntersectionAndStatisticTime, (time_pg / 1000.0).ToString(".000"), null, null);
-                AppendDgvText(IntersectionAndStatisticLength, totalLength_pg.ToString(), null, null);
+                double meterLength = GeographicCoordinateSystemUnitToMeter_Length(totalLength_pg, geo.SpatialReference as IGeographicCoordinateSystem);
+                AppendDgvText(IntersectionAndStatisticLength, (meterLength / 1000.0).ToString(), null, null);
 
                 SetProgress("裁剪完成...", 100);
             }
@@ -1629,7 +1645,8 @@ namespace PGDis {
                 IArea area = geo as IArea;
                 if (area != null) {
                     double b = Math.Abs(area.Area);
-                    AppendDgvText(IntersectionAndStatisticArea, null, b.ToString(), null);
+                    double meterArea = GeographicCoordinateSystemUnitToMeter_Area(b, geo.SpatialReference as IGeographicCoordinateSystem);
+                    AppendDgvText(IntersectionAndStatisticArea, null, (meterArea / 1000000.0).ToString(), null);
                 }
                 SetProgress("正在裁剪...", 60);
 
@@ -1650,7 +1667,8 @@ namespace PGDis {
                 long time_pg = sw.ElapsedMilliseconds;
                 AppendDgvText(IntersectionAndStatisticSum, null, count_pg.ToString(), null);
                 AppendDgvText(IntersectionAndStatisticTime, null, (time_pg / 1000.0).ToString(".000"), null);
-                AppendDgvText(IntersectionAndStatisticLength, null, totalLength_pg.ToString(), null);
+                double meterLength = GeographicCoordinateSystemUnitToMeter_Length(totalLength_pg, geo.SpatialReference as IGeographicCoordinateSystem);
+                AppendDgvText(IntersectionAndStatisticLength, null, (meterLength / 1000.0).ToString(), null);
 
                 SetProgress("裁剪完成...", 100);
             }
@@ -1676,7 +1694,8 @@ namespace PGDis {
                 IArea area = geo as IArea;
                 if (area != null) {
                     double b = Math.Abs(area.Area);
-                    AppendDgvText(IntersectionArea, null, null, b.ToString());
+                    double meterArea = GeographicCoordinateSystemUnitToMeter_Area(b, geo.SpatialReference as IGeographicCoordinateSystem);
+                    AppendDgvText(IntersectionAndStatisticArea, null, null, (meterArea / 1000000.0).ToString());
                 }
                 SetProgress("正在裁剪...", 60);
 
@@ -1711,7 +1730,8 @@ namespace PGDis {
                 long time_arcgis = sw.ElapsedMilliseconds;
                 AppendDgvText(IntersectionAndStatisticSum, null, null, count_arcgis.ToString());
                 AppendDgvText(IntersectionAndStatisticTime, null, null, (time_arcgis / 1000.0).ToString(".000"));
-                AppendDgvText(IntersectionAndStatisticLength, null, null, totalLength_arcgis.ToString());
+                double meterLength = GeographicCoordinateSystemUnitToMeter_Length(totalLength_arcgis, geo.SpatialReference as IGeographicCoordinateSystem);
+                AppendDgvText(IntersectionAndStatisticLength, null, null, (meterLength / 1000.0).ToString());
 
                 SetProgress("裁剪完成...", 100);
             }
@@ -1870,6 +1890,26 @@ namespace PGDis {
         }
 
         #endregion
+
+        private double GeographicCoordinateSystemUnitToMeter_Length(double length, IGeographicCoordinateSystem gcs) {
+            double datumMajor = gcs.Datum.Spheroid.SemiMajorAxis;
+            double datumMinor = gcs.Datum.Spheroid.SemiMinorAxis;
+            double average = (datumMajor + datumMinor) / 2;
+            double conversionFactor = gcs.CoordinateUnit.ConversionFactor;
+            double meterPerDegree = average * conversionFactor;
+
+            return length * meterPerDegree;
+        }
+
+        private double GeographicCoordinateSystemUnitToMeter_Area(double area, IGeographicCoordinateSystem gcs) {
+            double datumMajor = gcs.Datum.Spheroid.SemiMajorAxis;
+            double datumMinor = gcs.Datum.Spheroid.SemiMinorAxis;
+            double average = (datumMajor + datumMinor) / 2;
+            double conversionFactor = gcs.CoordinateUnit.ConversionFactor;
+            double meterPerDegree = average * conversionFactor;
+
+            return area * meterPerDegree * meterPerDegree;
+        }
 
     }
 }
