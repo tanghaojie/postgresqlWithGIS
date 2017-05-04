@@ -412,6 +412,7 @@ namespace PGDis {
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -675,6 +676,7 @@ namespace PGDis {
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -801,6 +803,7 @@ namespace PGDis {
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -972,6 +975,8 @@ namespace PGDis {
         private void SetProgress(string txt, int value) {
             toolStripStatusLabel2.Text = txt;
             toolStripProgressBar1.Value = value;
+
+            SetMainProgressBar(value);
             Thread.Sleep(10);
             Application.DoEvents();
         }
@@ -1015,6 +1020,7 @@ namespace PGDis {
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1275,9 +1281,11 @@ namespace PGDis {
                     AttributeForm af = new AttributeForm(dt);
                     af.Show();
                 }
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1340,9 +1348,11 @@ namespace PGDis {
                 AppendDgvText(IntersectSum, null, intersectCount_pg.ToString(), null);
                 AppendDgvText(IntersectTime, null, (time_pg / 1000.0).ToString(".000"), null);
                 SetProgress("空间相交执行完成", 100);
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1386,9 +1396,11 @@ namespace PGDis {
                 AppendDgvText(IntersectTime, null, null, (time_arcgis / 1000.0).ToString(".000"));
 
                 SetProgress("空间相交执行完成", 100);
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1456,9 +1468,11 @@ namespace PGDis {
                     AttributeForm af = new AttributeForm(dt);
                     af.Show();
                 }
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1518,9 +1532,11 @@ namespace PGDis {
                 AppendDgvText(IntersectionTime, null, (time_pg / 1000.0).ToString(".000"), null);
 
                 SetProgress("裁剪完成...", 100);
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1567,9 +1583,11 @@ namespace PGDis {
                 AppendDgvText(IntersectionSum, null, null, count_arcgis.ToString());
                 AppendDgvText(IntersectionTime, null, null, (time_arcgis / 1000.0).ToString(".000"));
                 SetProgress("裁剪完成...", 100);
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1621,9 +1639,11 @@ namespace PGDis {
                 AppendDgvText(IntersectionAndStatisticLength, (meterLength / 1000.0).ToString(), null, null);
 
                 SetProgress("裁剪完成...", 100);
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1671,9 +1691,11 @@ namespace PGDis {
                 AppendDgvText(IntersectionAndStatisticLength, null, (meterLength / 1000.0).ToString(), null);
 
                 SetProgress("裁剪完成...", 100);
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1734,9 +1756,11 @@ namespace PGDis {
                 AppendDgvText(IntersectionAndStatisticLength, null, null, (meterLength / 1000.0).ToString());
 
                 SetProgress("裁剪完成...", 100);
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1794,9 +1818,11 @@ namespace PGDis {
                     AttributeForm af = new AttributeForm(dt);
                     af.Show();
                 }
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1846,9 +1872,11 @@ namespace PGDis {
                 AppendDgvText(QueryTime, null, (time_pg / 1000.0).ToString(".000"), null);
 
                 SetProgress("查询完成...", 100);
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1882,9 +1910,11 @@ namespace PGDis {
                 AppendDgvText(QueryTime, null, null, (time_arcgis / 1000.0).ToString(".000"));
 
                 SetProgress("查询完成...", 100);
+                SetMainProgressBar(-1);
             }
             catch (Exception ex) {
                 Log(ex.Message + "-----" + ex.StackTrace);
+                SetMainProgressBar(-1);
                 MessageBox.Show("测试错误，请重试");
             }
         }
@@ -1909,6 +1939,20 @@ namespace PGDis {
             double meterPerDegree = average * conversionFactor;
 
             return area * meterPerDegree * meterPerDegree;
+        }
+
+        private void SetMainProgressBar(int value) {
+            if (value <= 0 || value >= 100) {
+                progressBar.Visible = false;
+            }
+            else {
+                progressBar.Value = value;
+                int x = (this.Width - progressBar.Width) / 2;
+                int y = (this.Height - progressBar.Height) / 2;
+                progressBar.Location = new System.Drawing.Point(x, y);
+                progressBar.BringToFront();
+                progressBar.Visible = true;
+            }
         }
 
     }

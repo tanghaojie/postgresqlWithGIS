@@ -7,10 +7,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace PGTest
-{
-    class Program
-    {
+namespace PGTest {
+    class Program {
         private static LicenseInitializer m_AOLicenseInitializer = new PGTest.LicenseInitializer();
         const string HOST = "192.168.1.100";
         const int PORT = 5432;
@@ -27,22 +25,20 @@ namespace PGTest
         static string connString = string.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};CommandTimeout=0;",
                 HOST, PORT, USER, PASSWORD, DB);
 
-        static void Main(string[] args)
-        {
+        static void Main(string[] args) {
             //m_AOLicenseInitializer.InitializeApplication(new esriLicenseProductCode[] { esriLicenseProductCode.esriLicenseProductCodeEngine },
             //new esriLicenseExtensionCode[] { });
 
 
             //CreateTable();
-            ImportEDGES(@"E:\SpatialHadoop\EDGES.csv\EDGES.csv");
-
+            //ImportEDGES(@"E:\SpatialHadoop\EDGES.csv\EDGES.csv");
+            ReadCsvFile(@"E:\OpenStreetMap\buildings\buildings");
             //Thread();
 
             //m_AOLicenseInitializer.ShutdownApplication();
         }
 
-        static void Thread()
-        {
+        static void Thread() {
             new System.Threading.Thread(Thread1).Start();
             new System.Threading.Thread(Thread2).Start();
             new System.Threading.Thread(Thread3).Start();
@@ -50,40 +46,41 @@ namespace PGTest
             new System.Threading.Thread(Thread5).Start();
         }
 
-        static void Thread1()
-        {
+        static void Thread1() {
             ImportThread(0, 15000000, @"E:\SpatialHadoop\EDGES.csv\EDGES.csv", @"C:\data\Log1.txt");
         }
-        static void Thread2()
-        {
+        static void Thread2() {
             ImportThread(15000001, 30000000, @"E:\SpatialHadoop\EDGES.csv\EDGES.csv", @"C:\data\Log2.txt");
         }
-        static void Thread3()
-        {
+        static void Thread3() {
             ImportThread(30000001, 45000000, @"E:\SpatialHadoop\EDGES.csv\EDGES.csv", @"C:\data\Log3.txt");
         }
-        static void Thread4()
-        {
+        static void Thread4() {
             ImportThread(45000001, 60000000, @"E:\SpatialHadoop\EDGES.csv\EDGES.csv", @"C:\data\Log4.txt");
         }
-        static void Thread5()
-        {
+        static void Thread5() {
             ImportThread(60000001, 80000000, @"E:\SpatialHadoop\EDGES.csv\EDGES.csv", @"C:\data\Log5.txt");
         }
 
+        static void ReadCsvFile(string csvPath) {
+            using (System.IO.FileStream fs = new System.IO.FileStream(csvPath, FileMode.Open, FileAccess.Read)) {
+                using (StreamReader sr = new StreamReader(fs, Encoding.UTF8)) {
+                    string line;
+                    while ((line = sr.ReadLine()) != null) {
+                        Log(@"C:\Users\QWE\Desktop\temp\building.txt", line + "\r\n\r\n\r\n");
+                    }
+                }
+            }
+        }
 
 
-        static void ImportThread(long start, long end, string csvPath, string logPath)
-        {
-            using (System.IO.FileStream fs = new System.IO.FileStream(csvPath, FileMode.Open, FileAccess.Read))
-            {
-                using (StreamReader sr = new StreamReader(fs, Encoding.UTF8))
-                {
-                    using (NpgsqlConnection conn = new NpgsqlConnection(connString))
-                    {
+
+        static void ImportThread(long start, long end, string csvPath, string logPath) {
+            using (System.IO.FileStream fs = new System.IO.FileStream(csvPath, FileMode.Open, FileAccess.Read)) {
+                using (StreamReader sr = new StreamReader(fs, Encoding.UTF8)) {
+                    using (NpgsqlConnection conn = new NpgsqlConnection(connString)) {
                         conn.Open();
-                        using (NpgsqlCommand cmd = new NpgsqlCommand())
-                        {
+                        using (NpgsqlCommand cmd = new NpgsqlCommand()) {
                             cmd.Connection = conn;
                             NpgsqlTransaction trans = conn.BeginTransaction();
                             string log = "Start[" + start + "," + end + "]:" + DateTime.Now.ToString("HH:mm:ss fff");
@@ -92,20 +89,16 @@ namespace PGTest
                             long lineNum = 0;
                             string line;
                             FLine_EDGES model = new FLine_EDGES();
-                            while ((line = sr.ReadLine()) != null)
-                            {
+                            while ((line = sr.ReadLine()) != null) {
                                 lineNum++;
-                                if (lineNum < start)
-                                {
+                                if (lineNum < start) {
                                     continue;
                                 }
-                                if (lineNum > end)
-                                {
+                                if (lineNum > end) {
                                     break;
                                 }
                                 string[] splits = SplitAndCheckLine_EDGES(line, lineNum);
-                                if (splits == null)
-                                {
+                                if (splits == null) {
                                     continue;
                                 }
                                 model = Line2Model(model, splits);
@@ -147,24 +140,20 @@ namespace PGTest
                                     new NpgsqlParameter("@para32",DbType.String) { Value=model.TNIDT},
                                     new NpgsqlParameter("@para33",DbType.Object) { Value=model.WKT.Trim('"')},
                                 };
-                                try
-                                {
+                                try {
                                     cmd.Parameters.Clear();
                                     cmd.CommandText = sql;
-                                    foreach (var item in npc)
-                                    {
+                                    foreach (var item in npc) {
                                         cmd.Parameters.Add(item);
                                     }
                                     cmd.ExecuteNonQuery();
                                 }
-                                catch (Exception ex)
-                                {
+                                catch (Exception ex) {
                                     log = "[" + lineNum + "] error." + ex.Message;
                                     Console.WriteLine(log);
                                     Log(logPath, log);
                                 }
-                                if (lineNum % 10000 == 0)
-                                {
+                                if (lineNum % 10000 == 0) {
                                     trans.Commit();
                                     log = "[" + lineNum + "]" + " Transaction." + DateTime.Now.ToString("HH:mm:ss fff");
                                     Console.WriteLine(log);
@@ -186,8 +175,7 @@ namespace PGTest
             Log(logPath, l);
         }
 
-        static void CreateTable()
-        {
+        static void CreateTable() {
             #region 
             string createTableSql = @"CREATE TABLE EDGES(   ID int8,
                                                            STATEFP varchar(2048),
@@ -225,48 +213,38 @@ namespace PGTest
             string addGeoColumnSql = "SELECT AddGeometryColumn ('edges', 'geom', 4326, 'LINESTRING', 2)";
             string dropGeoColumnSql = "SELECT DropGeometryColumn ('edges', 'geom')";
 
-            using (NpgsqlConnection conn = new NpgsqlConnection(connString))
-            {
+            using (NpgsqlConnection conn = new NpgsqlConnection(connString)) {
                 conn.Open();
-                using (NpgsqlCommand cmd = new NpgsqlCommand())
-                {
+                using (NpgsqlCommand cmd = new NpgsqlCommand()) {
                     cmd.Connection = conn;
                     cmd.CommandText = dropGeoColumnSql;
-                    try
-                    {
+                    try {
                         cmd.ExecuteNonQuery();
                         Console.WriteLine("drop geo column success");
                     }
-                    catch (Exception ex)
-                    {
+                    catch (Exception ex) {
                         Console.WriteLine("drop geo column" + ex.Message);
                     }
                 }
-                using (NpgsqlCommand cmd = new NpgsqlCommand())
-                {
+                using (NpgsqlCommand cmd = new NpgsqlCommand()) {
                     cmd.Connection = conn;
                     cmd.CommandText = createTableSql;
-                    try
-                    {
+                    try {
                         cmd.ExecuteNonQuery();
                         Console.WriteLine("create table success");
                     }
-                    catch (Exception ex)
-                    {
+                    catch (Exception ex) {
                         Console.WriteLine("create table" + ex.Message);
                     }
                 }
-                using (NpgsqlCommand cmd = new NpgsqlCommand())
-                {
+                using (NpgsqlCommand cmd = new NpgsqlCommand()) {
                     cmd.Connection = conn;
                     cmd.CommandText = addGeoColumnSql;
-                    try
-                    {
+                    try {
                         cmd.ExecuteNonQuery();
                         Console.WriteLine("add geo column success");
                     }
-                    catch (Exception ex)
-                    {
+                    catch (Exception ex) {
                         Console.WriteLine("add geo column" + ex.Message);
                     }
                 }
@@ -274,17 +252,12 @@ namespace PGTest
             Console.Read();
         }
 
-        static void ImportEDGES(string csvPath)
-        {
-            using (System.IO.FileStream fs = new System.IO.FileStream(csvPath, FileMode.Open, FileAccess.Read))
-            {
-                using (StreamReader sr = new StreamReader(fs, Encoding.UTF8))
-                {
-                    using (NpgsqlConnection conn = new NpgsqlConnection(connString))
-                    {
+        static void ImportEDGES(string csvPath) {
+            using (System.IO.FileStream fs = new System.IO.FileStream(csvPath, FileMode.Open, FileAccess.Read)) {
+                using (StreamReader sr = new StreamReader(fs, Encoding.UTF8)) {
+                    using (NpgsqlConnection conn = new NpgsqlConnection(connString)) {
                         conn.Open();
-                        using (NpgsqlCommand cmd = new NpgsqlCommand())
-                        {
+                        using (NpgsqlCommand cmd = new NpgsqlCommand()) {
                             cmd.Connection = conn;
                             NpgsqlTransaction trans = conn.BeginTransaction();
                             string log = "Start:" + DateTime.Now.ToString("HH:mm:ss fff");
@@ -294,13 +267,11 @@ namespace PGTest
                             string line;
                             FLine_EDGES model = new FLine_EDGES();
                             //Stopwatch sw = new Stopwatch();
-                            while ((line = sr.ReadLine()) != null)
-                            {
+                            while ((line = sr.ReadLine()) != null) {
                                 //sw.Restart();
                                 lineNum++;
                                 string[] splits = SplitAndCheckLine_EDGES(line, lineNum);
-                                if (splits == null)
-                                {
+                                if (splits == null) {
                                     continue;
                                 }
                                 model = Line2Model(model, splits);
@@ -352,15 +323,13 @@ namespace PGTest
                                 //Console.WriteLine(sw.ElapsedMilliseconds);
                                 //sw.Restart();
 
-                                try
-                                {
+                                try {
                                     cmd.Parameters.Clear();
                                     //sw.Stop();
                                     //Console.WriteLine("Clear:"+sw.ElapsedMilliseconds);
                                     //sw.Restart();
                                     cmd.CommandText = sql;
-                                    foreach (var item in npc)
-                                    {
+                                    foreach (var item in npc) {
                                         cmd.Parameters.Add(item);
                                     }
                                     //sw.Stop();
@@ -368,8 +337,7 @@ namespace PGTest
                                     //sw.Restart();
                                     cmd.ExecuteNonQuery();
                                 }
-                                catch (Exception ex)
-                                {
+                                catch (Exception ex) {
                                     log = "[" + lineNum + "] error." + ex.Message;
                                     Console.WriteLine(log);
                                     Log(log);
@@ -377,8 +345,7 @@ namespace PGTest
                                 //sw.Stop();
                                 //Console.WriteLine("execute:"+sw.ElapsedMilliseconds);
                                 //Console.WriteLine("");
-                                if (lineNum % 10000 == 0)
-                                {
+                                if (lineNum % 10000 == 0) {
                                     trans.Commit();
                                     log = "[" + lineNum + "]" + " Transaction." + DateTime.Now.ToString("HH:mm:ss fff");
                                     Console.WriteLine(log);
@@ -401,11 +368,9 @@ namespace PGTest
             }
         }
 
-        static string[] SplitAndCheckLine_EDGES(string line, long lineNum)
-        {
+        static string[] SplitAndCheckLine_EDGES(string line, long lineNum) {
             string[] splits = line.Split('\t');
-            if (splits.Length != 32)
-            {
+            if (splits.Length != 32) {
                 string log = "[" + lineNum.ToString() + "],can not split to 32";
                 Console.WriteLine(log);
                 Log(log);
@@ -414,46 +379,35 @@ namespace PGTest
             return splits;
         }
 
-        static FLine_EDGES Line2Model(FLine_EDGES FModel, string[] splites)
-        {
+        static FLine_EDGES Line2Model(FLine_EDGES FModel, string[] splites) {
             FModel.WKT = splites[0]; FModel.STATEFP = splites[1]; FModel.COUNTYFP = splites[2]; FModel.TLID = splites[3]; FModel.TFIDL = splites[4]; FModel.TFIDR = splites[5]; FModel.MTFCC = splites[6]; FModel.FULLNAME = splites[7]; FModel.SMID = splites[8]; FModel.LFROMADD = splites[9]; FModel.LTOADD = splites[10]; FModel.RFROMADD = splites[11]; FModel.RTOADD = splites[12]; FModel.ZIPL = splites[13]; FModel.ZIPR = splites[14]; FModel.FEATCAT = splites[15]; FModel.HYDROFLG = splites[16]; FModel.RAILFLG = splites[17]; FModel.ROADFLG = splites[18]; FModel.OLFFLG = splites[19]; FModel.PASSFLG = splites[20]; FModel.DIVROAD = splites[21]; FModel.EXTTYP = splites[22]; FModel.TTYP = splites[23]; FModel.DECKEDROAD = splites[24]; FModel.ARTPATH = splites[25]; FModel.PERSIST = splites[26]; FModel.GCSEFLG = splites[27]; FModel.OFFSETL = splites[28]; FModel.OFFSETR = splites[29]; FModel.TNIDF = splites[30]; FModel.TNIDT = splites[31];
             return FModel;
         }
 
         static object obj = new object();
-        static void Log(string txt)
-        {
-            lock (obj)
-            {
+        static void Log(string txt) {
+            lock (obj) {
                 //Append(@"E:\3-测试数据\Tiger\EDGES.csv\log.txt", txt + "\r\n");
             }
         }
-        static void Log(string path, string txt)
-        {
-            lock (obj)
-            {
+        static void Log(string path, string txt) {
+            lock (obj) {
                 Append(path, txt + "\r\n");
             }
         }
-        public static void Create(string path)
-        {
-            try
-            {
+        public static void Create(string path) {
+            try {
                 System.IO.FileStream fs = new System.IO.FileStream(path, FileMode.Create, FileAccess.ReadWrite);
                 fs.Close();
             }
-            catch
-            {
+            catch {
                 throw;
             }
         }
 
-        public static void Append(string path, string text)
-        {
-            try
-            {
-                if (!File.Exists(path))
-                {
+        public static void Append(string path, string text) {
+            try {
+                if (!File.Exists(path)) {
                     Create(path);
                 }
                 if (text == null)
@@ -462,16 +416,14 @@ namespace PGTest
                 sw.Write(text);
                 sw.Close();
             }
-            catch
-            {
+            catch {
                 throw;
             }
         }
 
 
 
-        static void createIndex()
-        {
+        static void createIndex() {
             const string HOST = "localhost";
             const int PORT = 5432;
             const string USER = "postgres";
@@ -489,21 +441,16 @@ namespace PGTest
             string line = string.Empty;
             int iXH = 0;
             System.IO.StreamReader file = new System.IO.StreamReader(@"E:\3-测试数据\Tiger\AREAWATER.csv\AREAWATER.csv");
-            while ((line = file.ReadLine()) != null)
-            {
+            while ((line = file.ReadLine()) != null) {
                 //这里的Line就是您要的的数据了
                 iXH++;//计数,总共几行
                 int page = iXH / MAX_RECORD_COUNT;
-                if (iXH % MAX_RECORD_COUNT == 1)
-                {
-                    using (NpgsqlConnection conn = new NpgsqlConnection(connString))
-                    {
-                        try
-                        {
+                if (iXH % MAX_RECORD_COUNT == 1) {
+                    using (NpgsqlConnection conn = new NpgsqlConnection(connString)) {
+                        try {
                             conn.Open();
                         }
-                        catch (Exception ex)
-                        {
+                        catch (Exception ex) {
                             Console.WriteLine(ex.ToString());
                             Console.Read();
                             return;
@@ -513,14 +460,11 @@ namespace PGTest
                         string sqlIndex = string.Format("VACUUM {0}", subTableName);
                         //string sqlIndex = string.Format("drop index idx_{0}_geom_{1}", TABLE_NAME, page);
                         // 建立索引
-                        using (NpgsqlCommand cmd = new NpgsqlCommand(sqlIndex, conn))
-                        {
-                            try
-                            {
+                        using (NpgsqlCommand cmd = new NpgsqlCommand(sqlIndex, conn)) {
+                            try {
                                 cmd.ExecuteNonQuery();
                             }
-                            catch (Exception ex)
-                            {
+                            catch (Exception ex) {
                                 Console.WriteLine("create partion table {0}_{1} index error:\r\n{2}", TABLE_NAME, page, ex.ToString());
                                 Console.Read();
                             }
@@ -530,8 +474,7 @@ namespace PGTest
             }
         }
 
-        static void import2()
-        {
+        static void import2() {
             const string HOST = "localhost";
             const int PORT = 5432;
             const string USER = "postgres";
@@ -546,42 +489,33 @@ namespace PGTest
             string connString = string.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};CommandTimeout=0;",
                 HOST, PORT, USER, PASSWORD, DB);
 
-            using (NpgsqlConnection conn = new NpgsqlConnection(connString))
-            {
-                try
-                {
+            using (NpgsqlConnection conn = new NpgsqlConnection(connString)) {
+                try {
                     conn.Open();
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     Console.WriteLine(ex.ToString());
                     Console.Read();
                     return;
                 }
 
                 // 创建基础表
-                using (NpgsqlCommand cmd = new NpgsqlCommand("CREATE TABLE " + TABLE_NAME + "(id int)", conn))
-                {
-                    try
-                    {
+                using (NpgsqlCommand cmd = new NpgsqlCommand("CREATE TABLE " + TABLE_NAME + "(id int)", conn)) {
+                    try {
                         cmd.ExecuteNonQuery();
                         Console.WriteLine("CREATE TABLE " + TABLE_NAME + "(id int)");
                     }
-                    catch (Exception ex)
-                    {
+                    catch (Exception ex) {
                         Console.WriteLine("create table water error");
                         Console.Read();
                     }
                 }
-                using (NpgsqlCommand cmd = new NpgsqlCommand("SELECT AddGeometryColumn ('water', 'geom', 4326, 'POLYGON', 2)", conn))
-                {
-                    try
-                    {
+                using (NpgsqlCommand cmd = new NpgsqlCommand("SELECT AddGeometryColumn ('water', 'geom', 4326, 'POLYGON', 2)", conn)) {
+                    try {
                         cmd.ExecuteNonQuery();
                         Console.WriteLine("SELECT AddGeometryColumn ('water', 'geom', 4326, 'POLYGON', 2)");
                     }
-                    catch (Exception ex)
-                    {
+                    catch (Exception ex) {
                         Console.WriteLine("add geom to table water error" + ex.StackTrace);
                         Console.Read();
                     }
@@ -595,23 +529,18 @@ namespace PGTest
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
                 System.IO.StreamReader file = new System.IO.StreamReader(@"E:\3-测试数据\Tiger\AREAWATER.csv\AREAWATER.csv");
-                while ((line = file.ReadLine()) != null)
-                {
+                while ((line = file.ReadLine()) != null) {
                     //这里的Line就是您要的的数据了
                     iXH++;//计数,总共几行
                     int page = iXH / MAX_RECORD_COUNT;
-                    if (iXH % MAX_RECORD_COUNT == 1)
-                    {
+                    if (iXH % MAX_RECORD_COUNT == 1) {
                         string sqlPartion = string.Format("CREATE TABLE {0}_{1}() INHERITS ({2})", TABLE_NAME, (int)(iXH / MAX_RECORD_COUNT), TABLE_NAME);
                         // 建立分区表
-                        using (NpgsqlCommand cmd = new NpgsqlCommand(sqlPartion, conn))
-                        {
-                            try
-                            {
+                        using (NpgsqlCommand cmd = new NpgsqlCommand(sqlPartion, conn)) {
+                            try {
                                 cmd.ExecuteNonQuery();
                             }
-                            catch (Exception ex)
-                            {
+                            catch (Exception ex) {
                                 Console.WriteLine("create partion table {0}_{1} error:\r\n{2}", TABLE_NAME, (int)(iXH / MAX_RECORD_COUNT), ex.ToString());
                                 Console.Read();
                             }
@@ -624,14 +553,11 @@ AS ON INSERT TO {2}
        INSERT INTO {5} VALUES(NEW.*)", TABLE_NAME, (int)(iXH / MAX_RECORD_COUNT), TABLE_NAME, iXH, iXH + MAX_RECORD_COUNT, subTableName);
 
                         // 建立规则
-                        using (NpgsqlCommand cmd = new NpgsqlCommand(sqlRule, conn))
-                        {
-                            try
-                            {
+                        using (NpgsqlCommand cmd = new NpgsqlCommand(sqlRule, conn)) {
+                            try {
                                 cmd.ExecuteNonQuery();
                             }
-                            catch (Exception ex)
-                            {
+                            catch (Exception ex) {
                                 Console.WriteLine(sqlRule);
                                 Console.WriteLine("add partion table {0}_{1} rule error:\r\n{2}", TABLE_NAME, (int)(iXH / MAX_RECORD_COUNT), ex.StackTrace);
                                 Console.Read();
@@ -640,14 +566,11 @@ AS ON INSERT TO {2}
 
                         string sqlIndex = string.Format("create index idx_{0}_geom_{1} on {2} using gist(geom)", TABLE_NAME, page, TABLE_NAME);
                         // 建立索引
-                        using (NpgsqlCommand cmd = new NpgsqlCommand(sqlIndex, conn))
-                        {
-                            try
-                            {
+                        using (NpgsqlCommand cmd = new NpgsqlCommand(sqlIndex, conn)) {
+                            try {
                                 cmd.ExecuteNonQuery();
                             }
-                            catch (Exception ex)
-                            {
+                            catch (Exception ex) {
                                 Console.WriteLine("create partion table {0}_{1} index error:\r\n{2}", TABLE_NAME, page, ex.ToString());
                                 Console.Read();
                             }
@@ -658,21 +581,17 @@ AS ON INSERT TO {2}
                     string sql = string.Format("INSERT INTO {0} (id, geom) VALUES ({1},ST_GeomFromText('{2}',4326))",
                         TABLE_NAME, iXH, line.Split(new char[] { '	' })[0].Trim('"'));
 
-                    using (NpgsqlCommand cmd = new NpgsqlCommand(sql, conn))
-                    {
-                        try
-                        {
+                    using (NpgsqlCommand cmd = new NpgsqlCommand(sql, conn)) {
+                        try {
                             cmd.ExecuteNonQuery();
                         }
-                        catch (Exception ex)
-                        {
+                        catch (Exception ex) {
                             Console.WriteLine("{0} line error", iXH);
 
                         }
                     }
 
-                    if (iXH % 10000 == 0)
-                    {
+                    if (iXH % 10000 == 0) {
                         Console.WriteLine("processing 1 - {0}", iXH);
                     }
 
@@ -691,8 +610,7 @@ AS ON INSERT TO {2}
             }
         }
 
-        static void import3()
-        {
+        static void import3() {
             //const string HOST = "192.168.1.201";
             const string HOST = "192.168.206.100";
             const int PORT = 5432;
@@ -707,14 +625,11 @@ AS ON INSERT TO {2}
             string connString = string.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};CommandTimeout=0;",
                 HOST, PORT, USER, PASSWORD, DB);
 
-            using (NpgsqlConnection conn = new NpgsqlConnection(connString))
-            {
-                try
-                {
+            using (NpgsqlConnection conn = new NpgsqlConnection(connString)) {
+                try {
                     conn.Open();
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     Console.WriteLine(ex.ToString());
                     return;
                 }
@@ -753,29 +668,24 @@ AS ON INSERT TO {2}
                 sw.Start();
                 //System.IO.StreamReader file = new System.IO.StreamReader(@"E:\3-测试数据\Tiger\AREAWATER.csv\AREAWATER.csv");
                 System.IO.StreamReader file = new System.IO.StreamReader(@"C:\data\AREAWATER.csv");
-                using (NpgsqlCommand cmd = new NpgsqlCommand())
-                {
+                using (NpgsqlCommand cmd = new NpgsqlCommand()) {
                     cmd.Connection = conn;
                     NpgsqlTransaction trans = conn.BeginTransaction();
                     Console.WriteLine(DateTime.Now.ToString("HH:mm:ss fff"));
-                    while ((line = file.ReadLine()) != null)
-                    {
+                    while ((line = file.ReadLine()) != null) {
                         //这里的Line就是您要的的数据了
                         iXH++;//计数,总共几行
                         string sql = string.Format("INSERT INTO water (id, geom) VALUES ({0},ST_GeomFromText('{1}',4326))",
                             iXH, line.Split(new char[] { '	' })[0].Trim('"'));
-                        try
-                        {
+                        try {
                             cmd.CommandText = sql;
                             cmd.ExecuteNonQuery();
                         }
-                        catch (Exception ex)
-                        {
+                        catch (Exception ex) {
                             Console.WriteLine("{0} line error", iXH);
                         }
 
-                        if (iXH % 10000 == 0)
-                        {
+                        if (iXH % 10000 == 0) {
                             trans.Commit();
                             Console.WriteLine(DateTime.Now.ToString("HH:mm:ss fff"));
                             Console.WriteLine("processing 1 - {0}", iXH);
@@ -796,8 +706,7 @@ AS ON INSERT TO {2}
             }
         }
 
-        static void importedge()
-        {
+        static void importedge() {
             const string HOST = "192.168.1.201";
             const int PORT = 5432;
             const string USER = "gpadmin";
@@ -811,14 +720,11 @@ AS ON INSERT TO {2}
             string connString = string.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};CommandTimeout=0;",
                 HOST, PORT, USER, PASSWORD, DB);
 
-            using (NpgsqlConnection conn = new NpgsqlConnection(connString))
-            {
-                try
-                {
+            using (NpgsqlConnection conn = new NpgsqlConnection(connString)) {
+                try {
                     conn.Open();
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     Console.WriteLine(ex.ToString());
                     return;
                 }
@@ -856,29 +762,24 @@ AS ON INSERT TO {2}
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
                 System.IO.StreamReader file = new System.IO.StreamReader(@"E:\3-测试数据\Tiger\EDGES.csv\EDGES.csv");
-                using (NpgsqlCommand cmd = new NpgsqlCommand())
-                {
+                using (NpgsqlCommand cmd = new NpgsqlCommand()) {
                     cmd.Connection = conn;
                     NpgsqlTransaction trans = conn.BeginTransaction();
                     Console.WriteLine(DateTime.Now.ToString("HH:mm:ss fff"));
-                    while ((line = file.ReadLine()) != null)
-                    {
+                    while ((line = file.ReadLine()) != null) {
                         //这里的Line就是您要的的数据了
                         iXH++;//计数,总共几行
                         string sql = string.Format("INSERT INTO " + TABLE_NAME + " (id, geom) VALUES ({0},ST_GeomFromText('{1}',4326))",
                             iXH, line.Split(new char[] { '	' })[0].Trim('"'));
-                        try
-                        {
+                        try {
                             cmd.CommandText = sql;
                             cmd.ExecuteNonQuery();
                         }
-                        catch (Exception ex)
-                        {
+                        catch (Exception ex) {
                             Console.WriteLine("{0} line error", iXH);
                         }
 
-                        if (iXH % 10000 == 0)
-                        {
+                        if (iXH % 10000 == 0) {
                             trans.Commit();
                             Console.WriteLine(DateTime.Now.ToString("HH:mm:ss fff"));
                             Console.WriteLine("processing 1 - {0}", iXH);
@@ -900,8 +801,7 @@ AS ON INSERT TO {2}
             }
         }
 
-        static void import1()
-        {
+        static void import1() {
             const string HOST = "localhost";
             const int PORT = 5432;
             const string USER = "postgres";
@@ -912,14 +812,11 @@ AS ON INSERT TO {2}
             string connString = string.Format("Server={0};Port={1};User Id={2};Password={3};Database={4};CommandTimeout=0;",
                 HOST, PORT, USER, PASSWORD, DB);
 
-            using (NpgsqlConnection conn = new NpgsqlConnection(connString))
-            {
-                try
-                {
+            using (NpgsqlConnection conn = new NpgsqlConnection(connString)) {
+                try {
                     conn.Open();
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     Console.WriteLine(ex.ToString());
                     return;
                 }
@@ -945,27 +842,22 @@ AS ON INSERT TO {2}
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
                 System.IO.StreamReader file = new System.IO.StreamReader(@"E:\3-测试数据\Tiger\EDGES.csv\EDGES.csv");
-                while ((line = file.ReadLine()) != null)
-                {
+                while ((line = file.ReadLine()) != null) {
                     //这里的Line就是您要的的数据了
                     iXH++;//计数,总共几行
                     string sql = string.Format("INSERT INTO edge (id, geom) VALUES ({0},ST_GeomFromText('{1}',4326))",
                         iXH, line.Split(new char[] { '	' })[0].Trim('"'));
 
-                    using (NpgsqlCommand cmd = new NpgsqlCommand(sql, conn))
-                    {
-                        try
-                        {
+                    using (NpgsqlCommand cmd = new NpgsqlCommand(sql, conn)) {
+                        try {
                             cmd.ExecuteNonQuery();
                         }
-                        catch (Exception ex)
-                        {
+                        catch (Exception ex) {
                             Console.WriteLine("{0} line error", iXH);
                         }
                     }
 
-                    if (iXH % 10000 == 0)
-                    {
+                    if (iXH % 10000 == 0) {
                         Console.WriteLine("processing 1 - {0}", iXH);
                     }
                     //if (iXH == 600000)
@@ -985,8 +877,7 @@ AS ON INSERT TO {2}
 
     }
 
-    public class FLine_EDGES
-    {
+    public class FLine_EDGES {
         public string WKT { get; set; }
         public string STATEFP { get; set; }
         public string COUNTYFP { get; set; }

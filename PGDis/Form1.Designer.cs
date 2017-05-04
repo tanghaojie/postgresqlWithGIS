@@ -52,6 +52,7 @@
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.splitContainer3 = new System.Windows.Forms.SplitContainer();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
             ((System.ComponentModel.ISupportInitialize)(this.axLicenseControl1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.axMapControl)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -326,6 +327,7 @@
             // 
             // splitContainer3.Panel1
             // 
+            this.splitContainer3.Panel1.Controls.Add(this.progressBar);
             this.splitContainer3.Panel1.Controls.Add(this.splitContainer1);
             // 
             // splitContainer3.Panel2
@@ -335,6 +337,14 @@
             this.splitContainer3.SplitterDistance = 553;
             this.splitContainer3.SplitterWidth = 1;
             this.splitContainer3.TabIndex = 12;
+            // 
+            // progressBar
+            // 
+            this.progressBar.Location = new System.Drawing.Point(805, 282);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(338, 23);
+            this.progressBar.TabIndex = 15;
+            this.progressBar.Visible = false;
             // 
             // Form1
             // 
@@ -392,6 +402,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn C;
         private System.Windows.Forms.DataGridViewTextBoxColumn CPG;
         private System.Windows.Forms.DataGridViewTextBoxColumn CARCGIS;
+        private System.Windows.Forms.ProgressBar progressBar;
     }
 }
 
