@@ -182,12 +182,23 @@ namespace PGDis {
 
         private void SetDgvColumns() {
             dgv.Columns.Clear();
-            dgv.Columns[dgv.Columns.Add(DgvColumn1Name, DgvColumn1Name)].SortMode = DataGridViewColumnSortMode.NotSortable;
-            dgv.Columns[dgv.Columns.Add(DgvColumn2Name, DgvColumn2Name)].SortMode = DataGridViewColumnSortMode.NotSortable;
+            DataGridViewColumn dgvCol;
+            dgvCol = dgv.Columns[dgv.Columns.Add(DgvColumn1Name, DgvColumn1Name)];
+            dgvCol.SortMode = DataGridViewColumnSortMode.NotSortable;
+            dgvCol.ReadOnly = true;
+
+            dgvCol = dgv.Columns[dgv.Columns.Add(DgvColumn2Name, DgvColumn2Name)];
+            dgvCol.SortMode = DataGridViewColumnSortMode.NotSortable;
+            dgvCol.ReadOnly = true;
+
             if (!string.IsNullOrEmpty(DgvColumn3Name)) {
-                dgv.Columns[dgv.Columns.Add(DgvColumn3Name, DgvColumn3Name)].SortMode = DataGridViewColumnSortMode.NotSortable;
+                dgvCol = dgv.Columns[dgv.Columns.Add(DgvColumn3Name, DgvColumn3Name)];
+                dgvCol.SortMode = DataGridViewColumnSortMode.NotSortable;
+                dgvCol.ReadOnly = true;
             }
-            dgv.Columns[dgv.Columns.Add(DgvColumn4Name, DgvColumn4Name)].SortMode = DataGridViewColumnSortMode.NotSortable;
+            dgvCol = dgv.Columns[dgv.Columns.Add(DgvColumn4Name, DgvColumn4Name)];
+            dgvCol.SortMode = DataGridViewColumnSortMode.NotSortable;
+            dgvCol.ReadOnly = true;
         }
 
         private void axMapControl_OnMouseDown(object sender, ESRI.ArcGIS.Controls.IMapControlEvents2_OnMouseDownEvent e) {
@@ -386,6 +397,7 @@ namespace PGDis {
         }
 
         private void ClearElement() {
+            axMapControl.Tag = null;
             IGraphicsContainer graphicsContainer = axMapControl.Map as IGraphicsContainer;
             graphicsContainer.DeleteAllElements();
             axMapControl.Refresh();
