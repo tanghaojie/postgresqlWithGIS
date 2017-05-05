@@ -1640,7 +1640,11 @@ namespace PGDis {
                     DataTable dt = ds.Tables[0];
                     if (dt.Rows.Count > 0) {
                         count_pg = int.Parse(dt.Rows[0][0].ToString());
-                        totalLength_pg = double.Parse(dt.Rows[0][1].ToString());
+                        object ovalue = dt.Rows[0][1];
+                        if (ovalue == null || ovalue == DBNull.Value) {
+                            ovalue = 0;
+                        }
+                        totalLength_pg = double.Parse(ovalue.ToString());
                     }
                 }
 
@@ -1692,7 +1696,11 @@ namespace PGDis {
                     DataTable dt = ds.Tables[0];
                     if (dt.Rows.Count > 0) {
                         count_pg = int.Parse(dt.Rows[0][0].ToString());
-                        totalLength_pg = double.Parse(dt.Rows[0][1].ToString());
+                        object ovalue = dt.Rows[0][1];
+                        if (ovalue == null || ovalue == DBNull.Value) {
+                            ovalue = 0;
+                        }
+                        totalLength_pg = double.Parse(ovalue.ToString());
                     }
                 }
 
@@ -1934,6 +1942,9 @@ namespace PGDis {
         #endregion
 
         private double GeographicCoordinateSystemUnitToMeter_Length(double length, IGeographicCoordinateSystem gcs) {
+            if (gcs == null) {
+                return length;
+            }
             double datumMajor = gcs.Datum.Spheroid.SemiMajorAxis;
             double datumMinor = gcs.Datum.Spheroid.SemiMinorAxis;
             double average = (datumMajor + datumMinor) / 2;
@@ -1944,6 +1955,9 @@ namespace PGDis {
         }
 
         private double GeographicCoordinateSystemUnitToMeter_Area(double area, IGeographicCoordinateSystem gcs) {
+            if (gcs == null) {
+                return area;
+            }
             double datumMajor = gcs.Datum.Spheroid.SemiMajorAxis;
             double datumMinor = gcs.Datum.Spheroid.SemiMinorAxis;
             double average = (datumMajor + datumMinor) / 2;
